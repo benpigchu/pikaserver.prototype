@@ -1,0 +1,7 @@
+{
+	"serviceAddress":"0.0.0.0",
+	"servicePort":"80",
+	"staticPath":"/home/benpigchu/static/",
+	"httpApps":[],
+	"noneHttpApps":[]
+}

@@ -8,6 +8,16 @@ const hostname="0.0.0.0"
 const port=80
 const staticPath="/home/benpigchu/static/"
 
+var config={}
+
+try{
+	fs.accessSync("config.json",fs.R_OK)
+	if(fs.statSync("config.json").isFile()){
+		config=JSON.parse(fs.readFileSync("config.json","utf-8"))
+	}
+}catch(err){}
+console.log(util.inspect(config))
+
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
