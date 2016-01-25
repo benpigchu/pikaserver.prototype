@@ -4,9 +4,9 @@ const url=require("url")
 const path=require("path")
 const util=require("util")
 
-const hostname="0.0.0.0"
-const port=80
-const staticPath="/home/benpigchu/static/"
+const defaultHostname="0.0.0.0"
+const defaultPort=80
+const defaultStaticPath="/home/user/static/"
 
 var config={}
 
@@ -17,6 +17,14 @@ try{
 	}
 }catch(err){}
 console.log(util.inspect(config))
+
+var hostname=defaultHostname
+var port=defaultPort
+var staticPath=defaultStaticPath
+
+if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
+if(config.httpServicePort!=undefined){port=config.httpServicePort}
+if(config.staticPath!=undefined){staticPath=config.staticPath}
 
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
