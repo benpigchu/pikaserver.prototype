@@ -10,32 +10,21 @@ const defaultStaticPath="/home/user/static/"
 
 var config={}
 
-try{
-	fs.accessSync("config.json",fs.R_OK)
-	if(fs.statSync("config.json").isFile()){
-		config=JSON.parse(fs.readFileSync("config.json","utf-8"))
-	}
-}catch(err){}
-console.log(util.inspect(config))
+try{config=require("./config.json")}catch(err){}
 
 var hostname=defaultHostname
 var port=defaultPort
 var staticPath=defaultStaticPath
+var appsConfigList=[]
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
+if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
-	if(reqPath.match(/\.\./)!=null){
-		console.log("---- bad request: including '..' ")
-		res.writeHead(400,{"Content-Type":"text/plain"})
-		res.end("pikaServiceError:bad request\n")
-		console.log("---- 400 sent")
-		return
-	}
 	var filePath=path.normalize(path.join(staticPath,reqPath))
 	console.log(`---- ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{
@@ -111,9 +100,49 @@ const staticFileReturner=(req,res)=>{
 	})
 }
 
+var apps=[]
+
+for (var i=0;i<appsConfigList.length;i++){
+	var app={
+		name:appsConfigList[i].name,
+		pathPrefix:appsConfigList[i].pathPrefix,
+		method:(req,res)=>{
+			console.log("---- undefined app method")
+			res.writeHead(500,{"Content-Type":"text/plain"})
+			res.end("pikaServiceError: undefined server behavior\n")
+			console.log("---- 500 sent")
+		}
+	}
+	var appPath=appsConfigList[i].file
+	if(appPath[0]!="/"){appPath="./"+appPath}
+	try{
+		var appMethod=require(appPath)
+		if(!(appMethod instanceof Function)){throw TypeError}
+		app.method=appMethod
+	}catch(err){}
+	apps.push(app)
+	console.log(`-- loaded http app: ${apps[i].name}`)
+}
+
 http.createServer((req,res)=>{
 	console.log("-- request heared")
-	//todo: http apps plugin
+	var reqUrl=url.parse(req.url)
+	console.log(`---- ask for ${reqUrl.pathname} with ${reqUrl.search} and ${reqUrl.hash}`)
+	var reqPath=decodeURIComponent(reqUrl.pathname)
+	if(reqPath.match(/\.\./)!=null){
+		console.log("---- bad request: including '..' ")
+		res.writeHead(400,{"Content-Type":"text/plain"})
+		res.end("pikaServiceError:bad request\n")
+		console.log("---- 400 sent")
+		return
+	}
+	for (var i=0;i<apps.length;i++){
+		if((reqPath+"/").slice(0,apps[i].pathPrefix.length)==apps[i].pathPrefix){
+			console.log(`---- use app: ${apps[i].name}`)
+			apps[i].method(req,res)
+			return
+		}
+	}
 	staticFileReturner(req,res)
 }).listen(port,hostname,()=>{
 	console.log(`-- pikaService running at http://${hostname}:${port}/`)

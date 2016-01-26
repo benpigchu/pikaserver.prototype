@@ -2,6 +2,12 @@
 	"serviceAddress":"0.0.0.0",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
-	"httpApps":[],
+	"httpApps":[
+		{
+			"name":"example",
+			"file":"httpApps/example.js",
+			"pathPrefix":"/example/"
+		}
+	],
 	"noneHttpApps":[]
 }
