@@ -24,6 +24,10 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 	"serviceAddress":"0.0.0.0",//address of http service (default 0.0.0.0)
 	"httpServicePort":"80",//port of http service (default 80)
 	"staticPath":"/home/benpigchu/static/",//directory to store static files (default /home/user/static/)
+	"staticRedirection":{
+		"/from":"/to",
+		"/begin/index.html":"/end.html"//this will not make /begin/ redirected to /end.html
+	},//folder or file redirection for static file service 
 	"httpApps":[
 		{
 			"name":"example",//name of the plugin, will be shown in log
