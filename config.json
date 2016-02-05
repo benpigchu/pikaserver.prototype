@@ -1,7 +1,7 @@
 {
 	"serviceAddress":"0.0.0.0",
-	"httpServicePort":"80",
-	"staticPath":"/home/benpigchu/static/",
+	"httpServicePort":"800",
+	"staticPath":"/private-git/pikasite-static",
 	"mimeType":{},
 	"httpApps":[
 		{
