@@ -1,11 +1,19 @@
 {
 	"serviceAddress":"0.0.0.0",
+<<<<<<< HEAD
 	"httpServicePort":"800",
 	"staticPath":"/private-git/pikasite-static",
 	"staticRedirection":{
 		"/bigProjects":"/index.html",
 		"/bigProjects/index.html":"/index.html"	
 	},
+=======
+	"httpServicePort":"80",
+	"staticPath":"/home/benpigchu/static/",
+	"staticRedirection":[
+		{"from":"/from","to":"/to"}
+	],
+>>>>>>> master
 	"httpApps":[
 		{
 			"name":"example",

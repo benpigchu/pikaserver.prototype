@@ -29,7 +29,7 @@ var hostname=defaultHostname
 var port=defaultPort
 var staticPath=defaultStaticPath
 var appsConfigList=[]
-var staticRedirection={}
+var staticRedirection=[]
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
@@ -40,11 +40,10 @@ if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirecti
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
-	for (var begin in staticRedirection){
-		if (staticRedirection.hasOwnProperty(begin)){
-			if(reqPath.slice(0,begin.length)==begin){
-				reqPath=staticRedirection[begin]+reqPath.slice(begin.length)
-			}
+	for(var i=0;i<staticRedirection.length;i++){
+		var begin=staticRedirection[i].from
+		if(reqPath.slice(0,begin.length)==begin){
+			reqPath=staticRedirection[i].to+reqPath.slice(begin.length)
 		}
 	}
 	var filePath=path.normalize(path.join(staticPath,reqPath))
