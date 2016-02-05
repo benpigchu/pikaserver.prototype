@@ -2,7 +2,6 @@
 	"serviceAddress":"0.0.0.0",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
-	"mimeType":{},
 	"httpApps":[
 		{
 			"name":"example",

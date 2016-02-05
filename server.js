@@ -8,6 +8,19 @@ const defaultHostname="0.0.0.0"
 const defaultPort=80
 const defaultStaticPath="/home/user/static/"
 
+const mimetype={
+	".html":"text/html",
+	".css":"text/css",
+	".js":"application/javascript",
+	".json":"application/json",
+	".svg":"image/svg+xml",
+	".png":"image/png",
+	".jpg":"image/jpeg",
+	".jpeg":"image/jpg",
+	".gif":"image/gif",
+	".ico":"image/vnd.microsoft.icon"
+}
+
 var config={}
 
 try{config=require("./config.json")}catch(err){}
@@ -62,7 +75,7 @@ const staticFileReturner=(req,res)=>{
 										}
 									}
 									console.log("---- modified")
-									res.writeHead(200,{"Last-Modified":stats.mtime})
+									res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":"text/html"})
 									var rs=fs.createReadStream(filePath)
 									rs.pipe(res)
 									console.log("---- file sent")
@@ -90,7 +103,11 @@ const staticFileReturner=(req,res)=>{
 						}
 					}
 					console.log("---- modified")
-					res.writeHead(200,{"Last-Modified":stats.mtime})
+					if(mimetype[path.extname(filePath)]!=undefined){
+						res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":path.extname(filePath)})						
+					}else{
+						res.writeHead(200,{"Last-Modified":stats.mtime})
+					}
 					var rs=fs.createReadStream(filePath)
 					rs.pipe(res)
 					console.log("---- file sent")
