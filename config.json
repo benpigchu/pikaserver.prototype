@@ -3,7 +3,8 @@
 	"httpServicePort":"800",
 	"staticPath":"/private-git/pikasite-static",
 	"staticRedirection":{
-		"/from":"/to"	
+		"/bigProjects":"/index.html",
+		"/bigProjects/index.html":"/index.html"	
 	},
 	"httpApps":[
 		{
