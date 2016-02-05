@@ -29,15 +29,24 @@ var hostname=defaultHostname
 var port=defaultPort
 var staticPath=defaultStaticPath
 var appsConfigList=[]
+var staticRedirection={}
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
 if(config.httpApps!=undefined){appsConfigList=config.httpApps}
+if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
 
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
+	for (var begin in staticRedirection){
+		if (staticRedirection.hasOwnProperty(begin)){
+			if(reqPath.slice(0,begin.length)==begin){
+				reqPath=staticRedirection[begin]+reqPath.slice(begin.length)
+			}
+		}
+	}
 	var filePath=path.normalize(path.join(staticPath,reqPath))
 	console.log(`---- ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{

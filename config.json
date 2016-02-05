@@ -2,6 +2,9 @@
 	"serviceAddress":"0.0.0.0",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
+	"staticRedirection":{
+		"/from":"/to"	
+	},
 	"httpApps":[
 		{
 			"name":"example",
