@@ -1,13 +1,7 @@
 {
 	"serviceAddress":"0.0.0.0",
-<<<<<<< HEAD
 	"httpServicePort":"800",
 	"staticPath":"/private-git/pikasite-static",
-	"mimeType":{},
-=======
-	"httpServicePort":"80",
-	"staticPath":"/home/benpigchu/static/",
->>>>>>> master
 	"httpApps":[
 		{
 			"name":"example",
