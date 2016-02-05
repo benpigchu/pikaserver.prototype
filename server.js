@@ -104,7 +104,7 @@ const staticFileReturner=(req,res)=>{
 					}
 					console.log("---- modified")
 					if(mimetype[path.extname(filePath)]!=undefined){
-						res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":path.extname(filePath)})						
+						res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":mimetype[path.extname(filePath)]})						
 					}else{
 						res.writeHead(200,{"Last-Modified":stats.mtime})
 					}
