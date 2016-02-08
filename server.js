@@ -21,6 +21,8 @@ const mimetype={
 	".ico":"image/vnd.microsoft.icon"
 }
 
+const serverStartTime=Date.now()
+
 var config={}
 
 try{config=require("./config.json")}catch(err){}
@@ -36,6 +38,36 @@ if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
 if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
+
+const send404=(req,res)=>{
+	res.writeHead(404,{"Content-Type":"text/plain"})
+	res.end("pikaServiceError:file not found\n")
+	console.log("---- 404 sent")
+}
+
+const sendFile=(req,res,filePath,stats)=>{
+	var ifModifiedAfter=req.headers["if-modified-since"]
+	console.log(`---- ask: if modified after ${util.inspect(ifModifiedAfter)}(${Date.parse(ifModifiedAfter)})`)
+	console.log(`---- last modified at ${stats.mtime}(${stats.mtime.getTime()})`)
+	if(ifModifiedAfter!=undefined){
+		if((stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999)&&(serverStartTime-Date.parse(ifModifiedAfter)<=999){//why 999? because http can only use s but ms to transport time in header
+			console.log("---- not modified")
+			res.writeHead(304,{"Last-Modified":stats.mtime})
+			res.end()
+			console.log("---- 304 sent")
+			return
+		}
+	}
+	console.log("---- modified")
+	if(mimetype[path.extname(filePath)]!=undefined){
+		res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":mimetype[path.extname(filePath)]})						
+	}else{
+		res.writeHead(200,{"Last-Modified":stats.mtime})
+	}
+	var rs=fs.createReadStream(filePath)
+	rs.pipe(res)
+	console.log("---- file sent")
+}
 
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
@@ -53,9 +85,7 @@ const staticFileReturner=(req,res)=>{
 	fs.access(filePath,fs.R_OK,(err)=>{
 		if(err){
 			console.log("---- not found")
-			res.writeHead(404,{"Content-Type":"text/plain"})
-			res.end("pikaServiceError:file not found\n")
-			console.log("---- 404 sent")
+			send404(req,res)
 		}else{
 			fs.stat(filePath,(err,stats)=>{
 				if(stats.isDirectory()){
@@ -65,62 +95,22 @@ const staticFileReturner=(req,res)=>{
 					fs.access(filePath,fs.R_OK,(err)=>{
 						if(err){
 							console.log("---- not found")
-							res.writeHead(404,{"Content-Type":"text/plain"})
-							res.end("pikaServiceError:file not found\n")
-							console.log("---- 404 sent")
+							send404(req,res)
 						}else{
 							fs.stat(filePath,(err,stats)=>{
 								if(!err&&stats.isFile()){
 									console.log("---- found")
-									var ifModifiedAfter=req.headers["if-modified-since"]
-									console.log(`---- ask: if modified after ${util.inspect(ifModifiedAfter)}(${Date.parse(ifModifiedAfter)})`)
-									console.log(`---- last modified at ${stats.mtime}(${stats.mtime.getTime()})`)
-									if(ifModifiedAfter!=undefined){
-										if(stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999){//why 999? because http can only use s but ms to transport time in header
-											console.log("---- not modified")
-											res.writeHead(304,{"Last-Modified":stats.mtime})
-											res.end()
-											console.log("---- 304 sent")
-											return
-										}
-									}
-									console.log("---- modified")
-									res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":"text/html"})
-									var rs=fs.createReadStream(filePath)
-									rs.pipe(res)
-									console.log("---- file sent")
+									sendFile(req,res,filePath,stats)
 								}else{
 									console.log("---- not found")
-									res.writeHead(404,{"Content-Type":"text/plain"})
-									res.end("pikaServiceError:file not found\n")
-									console.log("---- 404 sent")
+									send404(req,res)
 								}
 							})
 						}
 					})
 				}else{
 					console.log("---- found")
-					var ifModifiedAfter=req.headers["if-modified-since"]
-					console.log(`---- ask: if modified after ${util.inspect(ifModifiedAfter)}(${Date.parse(ifModifiedAfter)})`)
-					console.log(`---- last modified at ${stats.mtime}(${stats.mtime.getTime()})`)
-					if(ifModifiedAfter!=undefined){
-						if(stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999){//also here
-							console.log("---- not modified")
-							res.writeHead(304,{"Last-Modified":stats.mtime})
-							res.end()
-							console.log("---- 304 sent")
-							return
-						}
-					}
-					console.log("---- modified")
-					if(mimetype[path.extname(filePath)]!=undefined){
-						res.writeHead(200,{"Last-Modified":stats.mtime,"Content-Type":mimetype[path.extname(filePath)]})						
-					}else{
-						res.writeHead(200,{"Last-Modified":stats.mtime})
-					}
-					var rs=fs.createReadStream(filePath)
-					rs.pipe(res)
-					console.log("---- file sent")
+					sendFile(req,res,filePath,stats)
 				}
 			})
 		}
