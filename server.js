@@ -46,13 +46,14 @@ const send404=(req,res)=>{
 }
 
 const sendFile=(req,res,filePath,stats)=>{
+	var returnMTime=stats.mtime.getTime()<serverStartTime.getTime()?serverStartTime.toUTCString():stats.mtime.toUTCString()
 	var ifModifiedAfter=req.headers["if-modified-since"]
 	console.log(`---- ask: if modified after ${util.inspect(ifModifiedAfter)}(${Date.parse(ifModifiedAfter)})`)
 	console.log(`---- last modified at ${stats.mtime}(${stats.mtime.getTime()})`)
 	if(ifModifiedAfter!=undefined){
 		if((stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999)&&(serverStartTime.getTime()-Date.parse(ifModifiedAfter)<=999)){//why 999? because http can only use s but ms to transport time in header
 			console.log("---- not modified")
-			res.writeHead(304,{"Last-Modified":(stats.mtime.getTime()<serverStartTime.getTime()?serverStartTime.toUTCString():stats.mtime.toUTCString())})
+			res.writeHead(304,{"Last-Modified":returnMTime})
 			res.end()
 			console.log("---- 304 sent")
 			return
@@ -60,9 +61,9 @@ const sendFile=(req,res,filePath,stats)=>{
 	}
 	console.log("---- modified")
 	if(mimetype[path.extname(filePath)]!=undefined){
-		res.writeHead(200,{"Last-Modified":stats.mtime.toUTCString(),"Content-Type":mimetype[path.extname(filePath)]})						
+		res.writeHead(200,{"Last-Modified":returnMTime,"Content-Type":mimetype[path.extname(filePath)]})						
 	}else{
-		res.writeHead(200,{"Last-Modified":stats.mtime.toUTCString()})
+		res.writeHead(200,{"Last-Modified":returnMTime})
 	}
 	var rs=fs.createReadStream(filePath)
 	rs.pipe(res)
