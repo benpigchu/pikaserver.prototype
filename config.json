@@ -1,9 +1,10 @@
 {
 	"serviceAddress":"0.0.0.0",
-	"httpServicePort":"80",
-	"staticPath":"/home/benpigchu/static/",
+	"httpServicePort":"800",
+	"staticPath":"/private-git/pikasite-static",
 	"staticRedirection":[
-		{"from":"/from","to":"/to"}
+		{"from":"/bigProjects/index.html","to":"/index.html"},
+		{"from":"/bigProjects","to":"/index.html"}
 	],
 	"httpApps":[
 		{
