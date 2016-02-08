@@ -25,7 +25,7 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 	"httpServicePort":"80",//port of http service (default 80)
 	"staticPath":"/home/benpigchu/static/",//directory to store static files (default /home/user/static/)
 	"staticRedirection":[
-		{"from":"/from","to":"/to"}
+		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}//this will not make /begin/ redirected to /end.html
 	],//folder or file redirection for static file service 
 	"httpApps":[
