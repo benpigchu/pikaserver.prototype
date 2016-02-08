@@ -50,7 +50,7 @@ const sendFile=(req,res,filePath,stats)=>{
 	console.log(`---- ask: if modified after ${util.inspect(ifModifiedAfter)}(${Date.parse(ifModifiedAfter)})`)
 	console.log(`---- last modified at ${stats.mtime}(${stats.mtime.getTime()})`)
 	if(ifModifiedAfter!=undefined){
-		if((stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999)&&(serverStartTime-Date.parse(ifModifiedAfter)<=999){//why 999? because http can only use s but ms to transport time in header
+		if((stats.mtime.getTime()-Date.parse(ifModifiedAfter)<=999)&&(serverStartTime-Date.parse(ifModifiedAfter)<=999)){//why 999? because http can only use s but ms to transport time in header
 			console.log("---- not modified")
 			res.writeHead(304,{"Last-Modified":stats.mtime})
 			res.end()
