@@ -79,7 +79,7 @@ const staticFileReturner=(req,res)=>{
 		var begin=staticRedirection[i].from
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
-			reqPath=staticRedirection[i].to+reqPath.slice(begin.length)
+			reqPath=staticRedirection[i].to+reqPath.slice(staticRedirection[i].from.length)
 			console.log(`---- redirect to ${reqPath}`)
 			break
 		}
