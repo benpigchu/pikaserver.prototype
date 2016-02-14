@@ -28,6 +28,9 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}//this will not make /begin/ redirected to /end.html
 	],//folder or file redirection for static file service 
+	"staticRangeRedirection":[
+		{"from":"/origin","to":"/origin/index.html"}
+	],//map a folder to a returning file
 	"httpApps":[
 		{
 			"name":"example",//name of the plugin, will be shown in log

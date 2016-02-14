@@ -6,6 +6,9 @@
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}
 	],
+		"staticRangeRedirection":[
+		{"from":"/origin","to":"/origin/index.html"}
+	],
 	"httpApps":[
 		{
 			"name":"example",

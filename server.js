@@ -32,12 +32,14 @@ var port=defaultPort
 var staticPath=defaultStaticPath
 var appsConfigList=[]
 var staticRedirection=[]
+var staticRangeRedirection=[]
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
 if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
+if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
 
 const send404=(req,res)=>{
 	res.writeHead(404,{"Content-Type":"text/plain"})
@@ -75,8 +77,18 @@ const staticFileReturner=(req,res)=>{
 	var reqPath=decodeURIComponent(reqUrl.pathname)
 	for(var i=0;i<staticRedirection.length;i++){
 		var begin=staticRedirection[i].from
-		if(reqPath.slice(0,begin.length)==begin){
+		if(begin[begin.length-1]!="/"){begin+="/"}
+		if((reqPath+"/").slice(0,begin.length)==begin){
 			reqPath=staticRedirection[i].to+reqPath.slice(begin.length)
+			console.log(`---- redirect to ${reqPath}`)
+			break
+		}
+	}
+	for(var i=0;i<staticRangeRedirection.length;i++){
+		var begin=staticRangeRedirection[i].from
+		if(begin[begin.length-1]!="/"){begin+="/"}
+		if((reqPath+"/").slice(0,begin.length)==begin){
+			reqPath=staticRangeRedirection[i].to
 			console.log(`---- redirect to ${reqPath}`)
 			break
 		}
