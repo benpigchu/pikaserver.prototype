@@ -81,8 +81,8 @@ const staticFileReturner=(req,res)=>{
 		var begin=staticRangeRejection[i]
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
-			send404(req,res)
 			console.log(`---- reject, send404`)
+			send404(req,res)
 			return
 		}
 	}
