@@ -77,8 +77,8 @@ const sendFile=(req,res,filePath,stats)=>{
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
-	for(var i=0;i<staticRedirection.length;i++){
-		var begin=staticRedirection[i]
+	for(var i=0;i<staticRangeRejection.length;i++){
+		var begin=staticRangeRejection[i]
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
 			send404(req,res)
