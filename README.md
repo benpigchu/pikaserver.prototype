@@ -31,6 +31,9 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 	"staticRangeRedirection":[
 		{"from":"/origin","to":"/origin/index.html"}
 	],//map a folder to a returning file
+	"staticRangeRejection":[
+		"/nothing"
+	],//any file under the path will mark as 404
 	"httpApps":[
 		{
 			"name":"example",//name of the plugin, will be shown in log

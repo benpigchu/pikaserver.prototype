@@ -33,6 +33,7 @@ var staticPath=defaultStaticPath
 var appsConfigList=[]
 var staticRedirection=[]
 var staticRangeRedirection=[]
+var staticRangeRejection=[]
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
@@ -40,6 +41,7 @@ if(config.staticPath!=undefined){staticPath=config.staticPath}
 if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
 if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
+if(config.staticRangeRejection!=undefined){staticRangeRejection=config.staticRangeRejection}
 
 const send404=(req,res)=>{
 	res.writeHead(404,{"Content-Type":"text/plain"})
@@ -75,6 +77,15 @@ const sendFile=(req,res,filePath,stats)=>{
 const staticFileReturner=(req,res)=>{
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
+	for(var i=0;i<staticRedirection.length;i++){
+		var begin=staticRedirection[i]
+		if(begin[begin.length-1]!="/"){begin+="/"}
+		if((reqPath+"/").slice(0,begin.length)==begin){
+			send404(req,res)
+			console.log(`---- reject, send404`)
+			return
+		}
+	}
 	for(var i=0;i<staticRedirection.length;i++){
 		var begin=staticRedirection[i].from
 		if(begin[begin.length-1]!="/"){begin+="/"}

@@ -9,6 +9,9 @@
 		"staticRangeRedirection":[
 		{"from":"/origin","to":"/origin/index.html"}
 	],
+	"staticRangeRejection":[
+		"/nothing"
+	],
 	"httpApps":[
 		{
 			"name":"example",
