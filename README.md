@@ -14,7 +14,7 @@ More detials will added here after the app-plugin system finished.
 
 ## How to use http apps plugin
 
-Just write something export a function(req,res), where req and res is http.IncomingMessage and http.ServerRespond respectly. 
+Just write something export a function(req,res,reqId), where req and res is http.IncomingMessage and http.ServerRespond respectly, and reqId is Id of request for logging. 
 Then all you need to do is add it to the httpApps list in config.json and determine what pathPrefix will it listen.
 
 ## About config.json

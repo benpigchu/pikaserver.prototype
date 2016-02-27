@@ -4,8 +4,8 @@ const url=require("url")
 const path=require("path")
 const util=require("util")
 
-module.exports=(req,res)=>{
+module.exports=(req,res,reqId)=>{
 	res.writeHead(200,{"Content-Type":"text/plain"})
 	res.end(url.parse(req.url).search)
-	console. log("---- querystring sent")
+	console. log(`---- [${reqId}]querystring sent`)
 }
