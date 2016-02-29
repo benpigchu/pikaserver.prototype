@@ -22,6 +22,12 @@ const mimetype={
 	".ico":"image/vnd.microsoft.icon"
 }
 
+const defaultErrorMessage={
+	"400":"pikaServiceError:bad request\n",
+	"404":"pikaServiceError:file not found\n",
+	"500":"pikaServiceError:server code error\n"
+}
+
 const serverStartTime=new Date()
 
 var config={}
@@ -31,6 +37,8 @@ try{config=require("./config.json")}catch(err){}
 var hostname=defaultHostname
 var port=defaultPort
 var staticPath=defaultStaticPath
+var errorMessage={}
+var errorPage={}
 var appsConfigList=[]
 var staticRedirection=[]
 var staticRangeRedirection=[]
@@ -39,15 +47,59 @@ var staticRangeRejection=[]
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
+if(config.errorMessage!=undefined){errorMessage=config.errorMessage}
+if(config.errorPage!=undefined){errorPage=config.errorPage}
 if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
 if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
 if(config.staticRangeRejection!=undefined){staticRangeRejection=config.staticRangeRejection}
 
-const send404=(req,res,reqId)=>{
-	res.writeHead(404,{"Content-Type":"text/plain"})
-	res.end("pikaServiceError:file not found\n")
-	console.log(`---- [${reqId}]404 sent`)
+const sendError=(req,res,code,reqId)=>{
+	var sendErrorMessage=()=>{		
+		res.writeHead(code,{"Content-Type":"text/plain"})
+		if(code in errorMessage){
+			res.end(errorMessage[code])
+		}else{
+			res.end(defaultErrorMessage[code])
+		}
+	}
+	if(code in errorPage){
+		fs.access(errorPage[code],fs.R_OK,(err)=>{
+			if(err){
+				sendErrorMessage()
+			}else{
+				fs.stat(errorPage[code],(err,stats)=>{
+					if(err){
+						sendErrorMessage()
+					}else if(!stats.isFile()){
+						sendErrorMessage()
+					}else{
+						if(mimetype[path.extname(errorPage[code])]!=undefined){
+							res.setHeader("Content-Type",mimetype[path.extname(errorPage[code])])						
+						}
+						var encode=req.headers['accept-encoding'].split(", ")
+						var rs=fs.createReadStream(errorPage[code])
+						if(encode.indexOf("gzip")!=-1){
+							res.writeHead(code,{'Content-Encoding':'gzip'})
+							console.log(`---- [${reqId}]use gzip`)
+							rs.pipe(zlib.createGzip()).pipe(res)
+						}else if(encode.indexOf("deflate")!=-1){
+							res.writeHead(code,{'Content-Encoding':'deflate'})
+							console.log(`---- [${reqId}]use deflate`)
+							rs.pipe(zlib.createDeflate()).pipe(res)
+						}else{
+							console.log(`---- [${reqId}]use raw`)		
+							res.writeHead(code)
+							rs.pipe(res)
+						}
+					}
+				})
+			}
+		})
+	}else{
+		sendErrorMessage()
+	}
+	console.log(`---- [${reqId}]${code} sent`)
 }
 
 const sendFile=(req,res,filePath,stats,reqId)=>{
@@ -96,7 +148,7 @@ const staticFileReturner=(req,res,reqId)=>{
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
 			console.log(`---- [${reqId}]reject, send404`)
-			send404(req,res,reqId)
+			sendError(req,res,404,reqId)
 			return
 		}
 	}
@@ -123,7 +175,7 @@ const staticFileReturner=(req,res,reqId)=>{
 	fs.access(filePath,fs.R_OK,(err)=>{
 		if(err){
 			console.log(`---- [${reqId}]not found`)
-			send404(req,res,reqId)
+			sendError(req,res,404,reqId)
 		}else{
 			fs.stat(filePath,(err,stats)=>{
 				if(stats.isDirectory()){
@@ -133,7 +185,7 @@ const staticFileReturner=(req,res,reqId)=>{
 					fs.access(filePath,fs.R_OK,(err)=>{
 						if(err){
 							console.log(`---- [${reqId}]not found`)
-							send404(req,res,reqId)
+							sendError(req,res,404,reqId)
 						}else{
 							fs.stat(filePath,(err,stats)=>{
 								if(!err&&stats.isFile()){
@@ -141,7 +193,7 @@ const staticFileReturner=(req,res,reqId)=>{
 									sendFile(req,res,filePath,stats,reqId)
 								}else{
 									console.log(`---- [${reqId}]not found`)
-									send404(req,res,reqId)
+									sendError(req,res,404,reqId)
 								}
 							})
 						}
@@ -163,9 +215,7 @@ for (var i=0;i<appsConfigList.length;i++){
 		pathPrefix:appsConfigList[i].pathPrefix,
 		method:(req,res,reqId)=>{
 			console.log(`---- [${reqId}]undefined app method`)
-			res.writeHead(500,{"Content-Type":"text/plain"})
-			res.end("pikaServiceError: undefined server behavior\n")
-			console.log(`---- [${reqId}]500 sent`)
+			sendError(req,res,500,reqId)
 		}
 	}
 	var appPath=appsConfigList[i].file
@@ -190,9 +240,7 @@ http.createServer((req,res)=>{
 	var reqPath=decodeURIComponent(reqUrl.pathname)
 	if(reqPath.match(/\.\./)!=null){
 		console.log(`---- [${reqId}]bad request: including '..' `)
-		res.writeHead(400,{"Content-Type":"text/plain"})
-		res.end("pikaServiceError:bad request\n")
-		console.log(`---- [${reqId}]400 sent`)
+		sendError(req,res,400,reqId)
 		return
 	}
 	for (var i=0;i<apps.length;i++){

@@ -24,6 +24,12 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 	"serviceAddress":"0.0.0.0",//address of http service (default 0.0.0.0)
 	"httpServicePort":"80",//port of http service (default 80)
 	"staticPath":"/home/benpigchu/static/",//directory to store static files (default /home/user/static/)
+	"errorMessage":{
+		"400":"WTF"	
+	},//custome error message
+	"errorPage":{
+		"404":"/home/benpigchu/static/404.html"
+	},//custome error page, the will overwrite the setting above
 	"staticRedirection":[
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}//this will not make /begin/ redirected to /end.html

@@ -2,6 +2,12 @@
 	"serviceAddress":"0.0.0.0",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
+	"errorMessage":{
+		"400":"WTF"	
+	},
+	"errorPage":{
+		"404":"/home/benpigchu/static/404.html"
+	},
 	"staticRedirection":[
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}
