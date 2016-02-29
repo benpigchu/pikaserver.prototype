@@ -169,7 +169,7 @@ for (var i=0;i<appsConfigList.length;i++){
 var reqNum=0
 
 http.createServer((req,res)=>{
-	util.inspect(req.headers['accept-encoding'])
+	console.log(util.inspect(req.headers['accept-encoding']))
 	var reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}]request heared at${new Date()}`)
