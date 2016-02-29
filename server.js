@@ -69,7 +69,7 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 		res.setHeader("Content-Type",mimetype[path.extname(filePath)])						
 	}
 	res.setHeader("Last-Modified",returnMTime)
-	console.log(req.headers['accept-encoding'].spilt(", "))
+	console.log(req.headers['accept-encoding'].split(", "))
 	var rs=fs.createReadStream(filePath)
 	res.writeHead(200)
 	rs.pipe(res)
