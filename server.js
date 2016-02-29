@@ -70,14 +70,18 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 	}
 	res.setHeader("Last-Modified",returnMTime)
 	var encode=req.headers['accept-encoding'].split(", ")
+	console.log(`---- [${reqId}]supported encoding: ${encode}`)
 	var rs=fs.createReadStream(filePath)
 	if(encode.indexOf("gzip")!=-1){
 		res.writeHead(200,{'Content-Encoding':'gzip'})
+		console.log(`---- [${reqId}]use gzip`)
 		rs.pipe(zlib.createGzip()).pipe(res)
 	}else if(encode.indexOf("deflate")!=-1){
 		res.writeHead(200,{'Content-Encoding':'deflate'})
+		console.log(`---- [${reqId}]use deflate`)
 		rs.pipe(zlib.createDeflate()).pipe(res)
 	}else{
+		console.log(`---- [${reqId}]use raw`)		
 		res.writeHead(200)
 		rs.pipe(res)
 	}
@@ -180,7 +184,7 @@ var reqNum=0
 http.createServer((req,res)=>{
 	var reqId=Date.now()+reqNum
 	reqNum++
-	console.log(`-- [${reqId}]request heared at${new Date()}`)
+	console.log(`-- [${reqId}]request heared at ${new Date()}`)
 	var reqUrl=url.parse(req.url)
 	console.log(`---- [${reqId}]ask for ${reqUrl.pathname} with ${reqUrl.search} and ${reqUrl.hash}`)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
