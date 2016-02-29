@@ -3,6 +3,7 @@ const fs=require("fs")
 const url=require("url")
 const path=require("path")
 const util=require("util")
+const zlib=require("zlib")
 
 const defaultHostname="0.0.0.0"
 const defaultPort=80
@@ -65,11 +66,11 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 	}
 	console.log(`---- [${reqId}]modified`)
 	if(mimetype[path.extname(filePath)]!=undefined){
-		res.writeHead(200,{"Last-Modified":returnMTime,"Content-Type":mimetype[path.extname(filePath)]})						
-	}else{
-		res.writeHead(200,{"Last-Modified":returnMTime})
+		res.setHead("Content-Type",mimetype[path.extname(filePath)])						
 	}
+	res.setHead("Last-Modified",returnMTime)
 	var rs=fs.createReadStream(filePath)
+	res.writeHead(200)
 	rs.pipe(res)
 	console.log(`---- [${reqId}]file sent`)
 }
@@ -168,6 +169,7 @@ for (var i=0;i<appsConfigList.length;i++){
 var reqNum=0
 
 http.createServer((req,res)=>{
+	util.inspect(req.headers['accept-encoding'])
 	var reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}]request heared at${new Date()}`)
