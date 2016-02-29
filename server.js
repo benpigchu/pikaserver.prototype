@@ -66,9 +66,9 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 	}
 	console.log(`---- [${reqId}]modified`)
 	if(mimetype[path.extname(filePath)]!=undefined){
-		res.setHead("Content-Type",mimetype[path.extname(filePath)])						
+		res.setHeader("Content-Type",mimetype[path.extname(filePath)])						
 	}
-	res.setHead("Last-Modified",returnMTime)
+	res.setHeader("Last-Modified",returnMTime)
 	var rs=fs.createReadStream(filePath)
 	res.writeHead(200)
 	rs.pipe(res)
