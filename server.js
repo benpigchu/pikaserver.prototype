@@ -69,6 +69,7 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 		res.setHeader("Content-Type",mimetype[path.extname(filePath)])						
 	}
 	res.setHeader("Last-Modified",returnMTime)
+	console.log(req.headers['accept-encoding'].spilt(", "))
 	var rs=fs.createReadStream(filePath)
 	res.writeHead(200)
 	rs.pipe(res)
@@ -169,7 +170,6 @@ for (var i=0;i<appsConfigList.length;i++){
 var reqNum=0
 
 http.createServer((req,res)=>{
-	console.log(util.inspect(req.headers['accept-encoding']))
 	var reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}]request heared at${new Date()}`)
