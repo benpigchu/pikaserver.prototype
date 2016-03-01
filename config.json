@@ -28,7 +28,8 @@
 	"noneHttpApps":[
 		{
 			"name":"anotherExample",
-			"command":"node noneHttpApps/example.js"	
+			"command":"node",
+			"arg":["noneHttpApps/example.js"]	
 		}
 	]
 }

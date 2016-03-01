@@ -54,7 +54,8 @@ Just write something you want to run when the server start, it even can be not-n
 	"noneHttpApps":[
 		{
 			"name":"anotherExample",//name of the plugin, will be shown in log
-			"command":"node noneHttpApps/example.js"//command to run the process	
+			"command":"node",//command to run it
+			"arg":["noneHttpApps/example.js"]//args of command
 		}
 	]
 }
