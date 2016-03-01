@@ -13,7 +13,7 @@ if(config.noneHttpApps!=undefined){appsConfig=config.noneHttpApps}
 var apps=[]
 appsConfig.forEach((app)=>{
 	try{
-		var appProcess=sublib.spawn(app.command,app.arg)
+		var appProcess=sublib.spawn(app.command,app.arg,{stdio:'inherit'})
 		apps.push(appProcess)
 		appProcess.on("exit",(code,signal)=>{console.log(`${app.name} end it's work`)})
 		console.log(`${app.name} loaded`)
