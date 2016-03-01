@@ -17,6 +17,10 @@ More detials will added here after the app-plugin system finished.
 Just write something export a function(req,res,reqId), where req and res is http.IncomingMessage and http.ServerRespond respectly, and reqId is Id of request for logging. 
 Then all you need to do is add it to the httpApps list in config.json and determine what pathPrefix will it listen.
 
+## How to use none-http apps plugin
+
+Just write something you want to run when the server start, it even can be not-node.
+
 ## About config.json
 ```json
 //!!notice: my json praser do not support comment, this wont fix
@@ -47,6 +51,11 @@ Then all you need to do is add it to the httpApps list in config.json and determ
 			"pathPrefix":"/example/"//only the request with urlpath beginning with this will be responded by the plugin, must begin and end with "/"
 		}
 	],
-	"noneHttpApps":[]//todo: none-http apps plugins
+	"noneHttpApps":[
+		{
+			"name":"anotherExample",//name of the plugin, will be shown in log
+			"command":"node noneHttpApps/example.js"//command to run the process	
+		}
+	]
 }
 ```

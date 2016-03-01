@@ -25,5 +25,10 @@
 			"pathPrefix":"/example/"
 		}
 	],
-	"noneHttpApps":[]
+	"noneHttpApps":[
+		{
+			"name":"anotherExample",
+			"command":"node noneHttpApps/example.js"	
+		}
+	]
 }
