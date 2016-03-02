@@ -77,7 +77,12 @@ const sendError=(req,res,code,reqId)=>{
 						if(mimetype[path.extname(errorPage[code])]!=undefined){
 							res.setHeader("Content-Type",mimetype[path.extname(errorPage[code])])						
 						}
-						var encode=req.headers['accept-encoding'].split(", ")
+						var encode
+						if(req.headers['accept-encoding']!=undefined){
+							encode=req.headers['accept-encoding'].split(", ")
+						}else{
+							encode=[]
+						}
 						var rs=fs.createReadStream(errorPage[code])
 						if(encode.indexOf("gzip")!=-1){
 							res.writeHead(code,{'Content-Encoding':'gzip'})
@@ -121,7 +126,12 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 		res.setHeader("Content-Type",mimetype[path.extname(filePath)])						
 	}
 	res.setHeader("Last-Modified",returnMTime)
-	var encode=req.headers['accept-encoding'].split(", ")
+	var encode
+	if(req.headers['accept-encoding']!=undefined){
+		encode=req.headers['accept-encoding'].split(", ")
+	}else{
+		encode=[]
+	}
 	console.log(`---- [${reqId}]supported encoding: ${encode}`)
 	var rs=fs.createReadStream(filePath)
 	if(encode.indexOf("gzip")!=-1){
