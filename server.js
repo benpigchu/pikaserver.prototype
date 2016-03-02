@@ -170,6 +170,9 @@ const staticFileReturner=(req,res,reqId)=>{
 			break
 		}
 	}
+	if(reqPath[reqPath.length-1]=="/"){
+		reqPath=reqPath.slice(0,reqPath.length-1)
+	}
 	var filePath=path.normalize(path.join(staticPath,reqPath))
 	console.log(`---- [${reqId}]ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{
