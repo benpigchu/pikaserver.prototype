@@ -208,6 +208,11 @@ const staticFileReturner=(req,res,reqId)=>{
 			fs.stat(filePath,(err,stats)=>{
 				if(stats.isDirectory()){
 					console.log(`---- [${reqId}]it is a directory`)
+					var rawReq=decodeURIComponent(reqUrl.pathname)
+					if(rawReq[rawReq.length-1]!="/"){
+						console.log(`---- [${reqId}]req do not end with '/'`)
+						res.writeHead(301,{"Location":"reqUrl.pathname"+"/"})
+					}
 					filePath=path.normalize(path.join(filePath,"/index.html"))
 					console.log(`---- [${reqId}]check ${filePath} instead`)
 					fs.access(filePath,fs.R_OK,(err)=>{
