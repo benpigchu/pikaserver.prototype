@@ -372,6 +372,7 @@ const updateHttps=()=>{
 				setTimeout(updateHttps,httpsConfig.update.period)
 			}catch(e){}
 		})
+		httpsServer=null
 	}else{
 		try{
 			sublib.execSync(httpsConfig.update.command)
@@ -381,7 +382,6 @@ const updateHttps=()=>{
 			setTimeout(updateHttps,httpsConfig.update.period)
 		}catch(e){}
 	}
-	httpsServer=null
 }
 
 if(httpsConfig.update==undefined){
