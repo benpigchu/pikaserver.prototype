@@ -361,15 +361,25 @@ const setHttpsServer=()=>{
 }
 
 const updateHttps=()=>{
-	httpsServer.close(()=>{
+	if(httpsServer!=null){
+		httpsServer.close(()=>{
+			try{
+				sublib.execSync(httpsOptions.update.command)
+			}catch(e){}
+			setHttpsServer()
+			try{
+				setTimeout(updateHttps,httpsOptions.update.period)
+			}catch(e){}
+		})
+	}else{
 		try{
-			sublib.execSync(httpsOptions.update.command)
-		}catch(e){}
-		setHttpsServer()
-		try{
-			setTimeout(updateHttps,httpsOptions.update.period)
-		}catch(e){}
-	})
+				sublib.execSync(httpsOptions.update.command)
+			}catch(e){}
+			setHttpsServer()
+			try{
+				setTimeout(updateHttps,httpsOptions.update.period)
+			}catch(e){}
+		}
 	httpsServer=null
 }
 
