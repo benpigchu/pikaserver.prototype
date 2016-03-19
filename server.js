@@ -350,7 +350,12 @@ const setHttpsServer=()=>{
 			key:fs.readFileSync(httpsConfig.key),
 			cert:fs.readFileSync(httpsConfig.cert)
 		}
-		httpsServer=https.createServer(httpsOptions,listenProcess).listen(httpsConfig.port,hostname,()=>{
+		httpsServer=https.createServer(httpsOptions,(req,res)=>{
+			if(httpsConfig.hsts){
+					res.setHeader("Strict-Transport-Security","max-age=7776000")
+			}
+			listenProcess(req,res)
+		}).listen(httpsConfig.port,hostname,()=>{
 			console.log(`-- pikaService running at https://${hostname}:${httpsConfig.port}/`)
 		})
 	}catch(e){}
@@ -384,6 +389,9 @@ http.createServer((req,res)=>{
 	if(httpsConfig.hsts){
 		if(httpsServer!=null){
 			res.setHeader("Strict-Transport-Security","max-age=7776000")
+			res.writeHead(426,{"Upgrade":"TLS/1.0"})
+			res.end()
+			return
 		}
 	}
 	listenProcess(req,res)
