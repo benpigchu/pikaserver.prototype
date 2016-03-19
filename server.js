@@ -98,7 +98,7 @@ for(var domain in domainSetting){
 }
 
 const sendError=(req,res,code,reqId)=>{
-	var domain=req.headers["Host"]
+	var domain=req.headers.host
 	var messages=errorMessage
 	var pages=errorPage
 	if(domain in domainSetting){
