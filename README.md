@@ -45,7 +45,7 @@ Just write something you want to run when the server start, it even can be not-n
 		"/nothing"
 	],//any file under the path will mark as 404
 	"staticLinking":[
-		{"from":"/from","to":"/home/benpigchu/to"}
+		{"from":"/here","to":"/home/benpigchu/to"}
 	],//similiar to the staticRedirection, but the to file is local path
 	"httpApps":[
 		{

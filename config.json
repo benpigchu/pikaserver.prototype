@@ -18,6 +18,9 @@
 	"staticRangeRejection":[
 		"/nothing"
 	],
+	"staticLinking":[
+		{"from":"/here","to":"/home/benpigchu/to"}
+	],
 	"httpApps":[
 		{
 			"name":"example",
