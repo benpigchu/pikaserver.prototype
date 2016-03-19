@@ -345,7 +345,7 @@ http.createServer(listenProcess).listen(port,hostname,()=>{
 
 var httpsConfig={}
 var httpsServer=null
-if(config.https!=undefined){httpsConfig=https}
+if(config.https!=undefined){httpsConfig=config.https}
 
 const setHttpsServer=()=>{
 	try{
@@ -373,13 +373,13 @@ const updateHttps=()=>{
 		})
 	}else{
 		try{
-				sublib.execSync(httpsOptions.update.command)
-			}catch(e){}
-			setHttpsServer()
-			try{
-				setTimeout(updateHttps,httpsOptions.update.period)
-			}catch(e){}
-		}
+			sublib.execSync(httpsOptions.update.command)
+		}catch(e){}
+		setHttpsServer()
+		try{
+			setTimeout(updateHttps,httpsOptions.update.period)
+		}catch(e){}
+	}
 	httpsServer=null
 }
 
