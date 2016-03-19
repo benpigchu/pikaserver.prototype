@@ -389,7 +389,7 @@ http.createServer((req,res)=>{
 	if(httpsConfig.hsts){
 		if(httpsServer!=null){
 			res.setHeader("Strict-Transport-Security","max-age=7776000")
-			res.writeHead(426,{"Upgrade":"TLS/1.0"})
+			res.writeHead(302,{"Location":"https://"+req.headers.host+req.url})
 			res.end()
 			return
 		}
