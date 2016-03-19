@@ -44,6 +44,7 @@ var staticRedirection=[]
 var staticRangeRedirection=[]
 var staticRangeRejection=[]
 var staticLinking=[]
+var domainSetting={}
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
@@ -55,6 +56,46 @@ if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirecti
 if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
 if(config.staticRangeRejection!=undefined){staticRangeRejection=config.staticRangeRejection}
 if(config.staticLinking!=undefined){staticLinking=config.staticLinking}
+if(config.domainSetting!=undefined){domainSetting=config.domainSetting}
+
+
+const generateApps=function(config,domain){
+	var appList=[]
+	config.forEach((appConfig)=>{
+		var app={
+			name:appConfig.name,
+			pathPrefix:appConfig.pathPrefix,
+			method:(req,res,reqId)=>{
+				console.log(`---- [${reqId}]undefined app method`)
+				sendError(req,res,500,reqId)
+			}
+		}
+		var appPath=appConfig.file
+		if(appPath[0]!="/"){appPath="./"+appPath}
+		try{
+			var appMethod=require(appPath)
+			if(!(appMethod instanceof Function)){throw TypeError}
+			app.method=appMethod
+		}catch(err){}
+		appList.push(app)
+		console.log(`-- loaded http app: ${apps[i].name} under ${domain}`)
+	})
+	return appList
+}
+
+var apps=generateApps(appsConfigList,"default domain")
+
+for(var domain in domainSetting){
+	if(domainSetting[domain].staticPath==undefined){domainSetting[domain].staticPath=defaultStaticPath}
+	if(domainSetting[domain].errorMessage==undefined){domainSetting[domain].errorMessage={}}
+	if(domainSetting[domain].errorPage==undefined){domainSetting[domain].errorPage={}}
+	if(domainSetting[domain].httpApps==undefined){domainSetting[domain].httpApps=[]}
+	if(domainSetting[domain].staticRedirection==undefined){domainSetting[domain].staticRedirection=[]}
+	if(domainSetting[domain].staticRangeRedirection==undefined){domainSetting[domain].staticRangeRedirection=[]}
+	if(domainSetting[domain].staticRangeRejection==undefined){domainSetting[domain].staticRangeRejection=[]}
+	if(domainSetting[domain].staticLinking==undefined){domainSetting[domain].staticLinking=[]}
+	domainSetting[domain].apps=generateApps(domainSetting[domain].httpApps,domain)
+}
 
 const sendError=(req,res,code,reqId)=>{
 	var sendErrorMessage=()=>{		
@@ -242,31 +283,9 @@ const staticFileReturner=(req,res,reqId)=>{
 	})
 }
 
-var apps=[]
-
-for (var i=0;i<appsConfigList.length;i++){
-	var app={
-		name:appsConfigList[i].name,
-		pathPrefix:appsConfigList[i].pathPrefix,
-		method:(req,res,reqId)=>{
-			console.log(`---- [${reqId}]undefined app method`)
-			sendError(req,res,500,reqId)
-		}
-	}
-	var appPath=appsConfigList[i].file
-	if(appPath[0]!="/"){appPath="./"+appPath}
-	try{
-		var appMethod=require(appPath)
-		if(!(appMethod instanceof Function)){throw TypeError}
-		app.method=appMethod
-	}catch(err){}
-	apps.push(app)
-	console.log(`-- loaded http app: ${apps[i].name}`)
-}
-
 var reqNum=0
 
-http.createServer((req,res)=>{
+const listenProcess=(req,res)=>{
 	var reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}]request heared at ${new Date()}`)
@@ -286,6 +305,8 @@ http.createServer((req,res)=>{
 		}
 	}
 	staticFileReturner(req,res,reqId)
-}).listen(port,hostname,()=>{
+}
+
+http.createServer(listenProcess).listen(port,hostname,()=>{
 	console.log(`-- pikaService running at http://${hostname}:${port}/`)
 });
