@@ -201,10 +201,23 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 }
 
 const staticFileReturner=(req,res,reqId)=>{
+	var domain=req.headers.host
+	var redirection=staticRedirection
+	var rangeRedirection=staticRangeRedirection
+	var rangeRejection=staticRangeRejection
+	var linking=staticLinking
+	var rootPath=staticPath
+	if(domain in domainSetting){
+		redirection=domainSetting[domain].staticRedirection
+		rangeRedirection=domainSetting[domain].staticRangeRedirection
+		rangeRejection=domainSetting[domain].staticRangeRejection
+		linking=domainSetting[domain].staticLinking
+		rootPath=domainSetting[domain].staticPath
+	}
 	var reqUrl=url.parse(req.url)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
-	for(var i=0;i<staticRangeRejection.length;i++){
-		var begin=staticRangeRejection[i]
+	for(var i=0;i<rangeRejection.length;i++){
+		var begin=rangeRejection[i]
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
 			console.log(`---- [${reqId}]reject, send404`)
@@ -212,31 +225,31 @@ const staticFileReturner=(req,res,reqId)=>{
 			return
 		}
 	}
-	for(var i=0;i<staticRedirection.length;i++){
-		var begin=staticRedirection[i].from
+	for(var i=0;i<redirection.length;i++){
+		var begin=redirection[i].from
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
-			reqPath=staticRedirection[i].to+reqPath.slice(staticRedirection[i].from.length)
+			reqPath=redirection[i].to+reqPath.slice(redirection[i].from.length)
 			console.log(`---- [${reqId}]redirect to ${reqPath}`)
 			break
 		}
 	}
-	for(var i=0;i<staticRangeRedirection.length;i++){
-		var begin=staticRangeRedirection[i].from
+	for(var i=0;i<rangeRedirection.length;i++){
+		var begin=rangeRedirection[i].from
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
-			reqPath=staticRangeRedirection[i].to
+			reqPath=rangeRedirection[i].to
 			console.log(`---- [${reqId}]redirect to ${reqPath}`)
 			break
 		}
 	}
 	var filePath
 	var isJumped=false
-	for(var i=0;i<staticLinking.length;i++){
-		var begin=staticLinking[i].from
+	for(var i=0;i<linking.length;i++){
+		var begin=linking[i].from
 		if(begin[begin.length-1]!="/"){begin+="/"}
 		if((reqPath+"/").slice(0,begin.length)==begin){
-			filePath=path.normalize(path.join(staticLinking[i].to,reqPath.slice(staticLinking[i].from.length)))
+			filePath=path.normalize(path.join(linking[i].to,reqPath.slice(linking[i].from.length)))
 			isJumped=true
 			break
 		}
@@ -245,7 +258,7 @@ const staticFileReturner=(req,res,reqId)=>{
 		if(reqPath[reqPath.length-1]=="/"){
 			reqPath=reqPath.slice(0,reqPath.length-1)
 		}
-		filePath=path.normalize(path.join(staticPath,reqPath))
+		filePath=path.normalize(path.join(path,reqPath))
 	}
 	console.log(`---- [${reqId}]ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{
@@ -293,25 +306,34 @@ const staticFileReturner=(req,res,reqId)=>{
 var reqNum=0
 
 const listenProcess=(req,res)=>{
+	var domain=req.headers.host
+	var application=apps
+	if(domain in domainSetting){
+		application=domainSetting[domain].apps
+	}
 	var reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}]request heared at ${new Date()}`)
 	var reqUrl=url.parse(req.url)
-	console.log(`---- [${reqId}]ask for ${reqUrl.pathname} with ${reqUrl.search} and ${reqUrl.hash}`)
+	console.log(`---- [${reqId}]ask for ${reqUrl.pathname} under ${domain} with ${reqUrl.search} and ${reqUrl.hash}`)
 	var reqPath=decodeURIComponent(reqUrl.pathname)
 	if(reqPath.match(/\.\./)!=null){
 		console.log(`---- [${reqId}]bad request: including '..' `)
 		sendError(req,res,400,reqId)
 		return
 	}
-	for (var i=0;i<apps.length;i++){
-		if((reqPath+"/").slice(0,apps[i].pathPrefix.length)==apps[i].pathPrefix){
-			console.log(`---- [${reqId}]use app: ${apps[i].name}`)
-			apps[i].method(req,res,reqId)
+	var isApps=false
+	application.forEach((app)=>{
+		if((reqPath+"/").slice(0,app.pathPrefix.length)==app.pathPrefix){
+			console.log(`---- [${reqId}]use app: ${app.name}`)
+			app.method(req,res,reqId)
+			isApps=true
 			return
 		}
+	})
+	if(!isApps){
+		staticFileReturner(req,res,reqId)	
 	}
-	staticFileReturner(req,res,reqId)
 }
 
 http.createServer(listenProcess).listen(port,hostname,()=>{
