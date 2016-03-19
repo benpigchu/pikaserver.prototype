@@ -243,6 +243,7 @@ const staticFileReturner=(req,res,reqId)=>{
 			break
 		}
 	}
+	console.log("here")
 	var filePath
 	var isJumped=false
 	for(var i=0;i<linking.length;i++){
@@ -258,7 +259,7 @@ const staticFileReturner=(req,res,reqId)=>{
 		if(reqPath[reqPath.length-1]=="/"){
 			reqPath=reqPath.slice(0,reqPath.length-1)
 		}
-		filePath=path.normalize(path.join(path,reqPath))
+		filePath=path.normalize(path.join(rootPath,reqPath))
 	}
 	console.log(`---- [${reqId}]ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{
