@@ -78,7 +78,7 @@ const generateApps=function(config,domain){
 			app.method=appMethod
 		}catch(err){}
 		appList.push(app)
-		console.log(`-- loaded http app: ${apps[i].name} under ${domain}`)
+		console.log(`-- loaded http app: ${app.name} under ${domain}`)
 	})
 	return appList
 }
