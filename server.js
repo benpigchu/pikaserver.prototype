@@ -98,27 +98,34 @@ for(var domain in domainSetting){
 }
 
 const sendError=(req,res,code,reqId)=>{
+	var domain=url.parse(req.url).host
+	var messages=errorMessage
+	var pages=errorPage
+	if(domain in domainSetting){
+		messages=domainSetting[domain].errorMessage
+		pages=domainSetting[domain].errorPage
+	}
 	var sendErrorMessage=()=>{		
 		res.writeHead(code,{"Content-Type":"text/plain"})
-		if(code in errorMessage){
-			res.end(errorMessage[code])
+		if(code in messages){
+			res.end(messages[code])
 		}else{
 			res.end(defaultErrorMessage[code])
 		}
 	}
-	if(code in errorPage){
-		fs.access(errorPage[code],fs.R_OK,(err)=>{
+	if(code in pages){
+		fs.access(pages[code],fs.R_OK,(err)=>{
 			if(err){
 				sendErrorMessage()
 			}else{
-				fs.stat(errorPage[code],(err,stats)=>{
+				fs.stat(pages[code],(err,stats)=>{
 					if(err){
 						sendErrorMessage()
 					}else if(!stats.isFile()){
 						sendErrorMessage()
 					}else{
-						if(mimetype[path.extname(errorPage[code])]!=undefined){
-							res.setHeader("Content-Type",mimetype[path.extname(errorPage[code])])						
+						if(mimetype[path.extname(pages[code])]!=undefined){
+							res.setHeader("Content-Type",mimetype[path.extname(pages[code])])						
 						}
 						var encode
 						if(req.headers['accept-encoding']!=undefined){
@@ -126,7 +133,7 @@ const sendError=(req,res,code,reqId)=>{
 						}else{
 							encode=[]
 						}
-						var rs=fs.createReadStream(errorPage[code])
+						var rs=fs.createReadStream(pages[code])
 						if(encode.indexOf("gzip")!=-1){
 							res.writeHead(code,{'Content-Encoding':'gzip'})
 							console.log(`---- [${reqId}]use gzip`)

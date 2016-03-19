@@ -6,8 +6,6 @@ var config={}
 
 try{config=require("./config.json")}catch(err){}
 
-
-//todo: non-http apps plugin
 var appsConfig=[]
 if(config.noneHttpApps!=undefined){appsConfig=config.noneHttpApps}
 var apps=[]
