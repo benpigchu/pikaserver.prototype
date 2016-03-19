@@ -363,6 +363,7 @@ const setHttpsServer=()=>{
 const updateHttps=()=>{
 	if(httpsServer!=null){
 		httpsServer.close(()=>{
+			console.log(`-- trying to update the cert`)
 			try{
 				sublib.execSync(httpsOptions.update.command)
 			}catch(e){}
