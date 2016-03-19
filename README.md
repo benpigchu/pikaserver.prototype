@@ -44,6 +44,9 @@ Just write something you want to run when the server start, it even can be not-n
 	"staticRangeRejection":[
 		"/nothing"
 	],//any file under the path will mark as 404
+	"staticLinking":[
+		{"from":"/from","to":"/home/benpigchu/to"}
+	],//similiar to the staticRedirection, but the to file is local path
 	"httpApps":[
 		{
 			"name":"example",//name of the plugin, will be shown in log
@@ -57,6 +60,11 @@ Just write something you want to run when the server start, it even can be not-n
 			"command":"node",//command to run it
 			"arg":["noneHttpApps/example.js"]//args of command
 		}
-	]
+	],
+	"domainSetting":{//use different setting on different domain
+		"127.0.0.0":{//domain name
+			"staticPath":"/home/benpigchu/local"//usable setting include staticPath staticRedirection staticRangeRejection staticRangeRedirection staticLinking httpApps errorMessage errorPage
+		}
+	}
 }
 ```

@@ -43,6 +43,7 @@ var appsConfigList=[]
 var staticRedirection=[]
 var staticRangeRedirection=[]
 var staticRangeRejection=[]
+var staticLinking=[]
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
@@ -53,6 +54,7 @@ if(config.httpApps!=undefined){appsConfigList=config.httpApps}
 if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirection}
 if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
 if(config.staticRangeRejection!=undefined){staticRangeRejection=config.staticRangeRejection}
+if(config.staticLinking!=undefined){staticLinking=config.staticLinking}
 
 const sendError=(req,res,code,reqId)=>{
 	var sendErrorMessage=()=>{		
@@ -180,10 +182,23 @@ const staticFileReturner=(req,res,reqId)=>{
 			break
 		}
 	}
-	if(reqPath[reqPath.length-1]=="/"){
-		reqPath=reqPath.slice(0,reqPath.length-1)
+	var filePath
+	var isJumped=false
+	for(var i=0;i<staticLinking.length;i++){
+		var begin=staticLinking[i].from
+		if(begin[begin.length-1]!="/"){begin+="/"}
+		if((reqPath+"/").slice(0,begin.length)==begin){
+			filePath=path.normalize(path.join(staticLinking[i].to,reqPath.slice(staticLinking[i].from.length)))
+			isJumped=true
+			break
+		}
 	}
-	var filePath=path.normalize(path.join(staticPath,reqPath))
+	if(!isJumped){
+		if(reqPath[reqPath.length-1]=="/"){
+			reqPath=reqPath.slice(0,reqPath.length-1)
+		}
+		filePath=path.normalize(path.join(staticPath,reqPath))
+	}
 	console.log(`---- [${reqId}]ask for ${filePath}`)
 	fs.access(filePath,fs.R_OK,(err)=>{
 		if(err){

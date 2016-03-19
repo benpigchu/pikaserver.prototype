@@ -12,7 +12,7 @@
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}
 	],
-		"staticRangeRedirection":[
+	"staticRangeRedirection":[
 		{"from":"/origin","to":"/origin/index.html"}
 	],
 	"staticRangeRejection":[
@@ -31,5 +31,10 @@
 			"command":"node",
 			"arg":["noneHttpApps/example.js"]	
 		}
-	]
+	],
+	"domainSetting":{
+		"127.0.0.0":{
+			"staticPath":"/home/benpigchu/local"
+		}
+	}
 }
