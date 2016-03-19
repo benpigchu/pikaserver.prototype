@@ -46,7 +46,7 @@
 		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",
 		"update":{
 			"period":1728000000,
-			"command":"/home/letsencrypt renew"
+			"command":"/home/letsencrypt renew --standalone-supported-challenges tls-sni-01"
 		}
 	}
 }
