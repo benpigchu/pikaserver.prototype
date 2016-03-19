@@ -41,12 +41,13 @@
 		}
 	},
 	"https":{
+		"hsts":false,
 		"port":"443",
 		"key":"/etc/letsencrypt/live/site.com/privkey.pem",
 		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",
 		"update":{
 			"period":1728000000,
-			"command":"/home/letsencrypt renew --standalone-supported-challenges tls-sni-01"
+			"command":"/home/letsencrypt/letsencrypt-auto renew --standalone-supported-challenges tls-sni-01"
 		}
 	}
 }

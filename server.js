@@ -339,10 +339,6 @@ const listenProcess=(req,res)=>{
 	}
 }
 
-http.createServer(listenProcess).listen(port,hostname,()=>{
-	console.log(`-- pikaService running at http://${hostname}:${port}/`)
-})
-
 var httpsConfig={}
 var httpsServer=null
 if(config.https!=undefined){httpsConfig=config.https}
@@ -383,6 +379,17 @@ const updateHttps=()=>{
 		}catch(e){}
 	}
 }
+
+http.createServer((req,res)=>{
+	if(httpsConfig.hsts){
+		if(httpsServer!=null){
+			res.setHeader("Strict-Transport-Security","max-age=7776000")
+		}
+	}
+	listenProcess(req,res)
+}).listen(port,hostname,()=>{
+	console.log(`-- pikaService running at http://${hostname}:${port}/`)
+})
 
 if(httpsConfig.update==undefined){
 	setHttpsServer()

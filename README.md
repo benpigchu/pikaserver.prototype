@@ -67,12 +67,13 @@ Just write something you want to run when the server start, it even can be not-n
 		}
 	},
 	"https":{
+		"hsts":true,//HSTS setting
 		"port":"443",//https port
 		"key":"/etc/letsencrypt/live/site.com/privkey.pem",//https key
 		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",//https cert
 		"update":{
 			"period":1728000000,//update period( in ms)
-			"command":"/home/letsencrypt"//update command
+			"command":"/home/letsencrypt/letsencrypt-auto renew"//update command
 		}
 	}
 }
