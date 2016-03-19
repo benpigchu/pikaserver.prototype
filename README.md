@@ -65,6 +65,15 @@ Just write something you want to run when the server start, it even can be not-n
 		"127.0.0.0":{//domain name
 			"staticPath":"/home/benpigchu/local"//usable setting include staticPath staticRedirection staticRangeRejection staticRangeRedirection staticLinking httpApps errorMessage errorPage
 		}
+	},
+	"https":{
+		"port":"443",//https port
+		"key":"/etc/letsencrypt/live/site.com/privkey.pem",//https key
+		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",//https cert
+		"update":{
+			"period":1728000000,//update period( in ms)
+			"command":"/home/letsencrypt"//update command
+		}
 	}
 }
 ```

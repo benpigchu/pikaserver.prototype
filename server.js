@@ -1,4 +1,6 @@
 const http=require("http")
+const https=require("https")
+const sublib=require("child_process")
 const fs=require("fs")
 const url=require("url")
 const path=require("path")
@@ -339,4 +341,40 @@ const listenProcess=(req,res)=>{
 
 http.createServer(listenProcess).listen(port,hostname,()=>{
 	console.log(`-- pikaService running at http://${hostname}:${port}/`)
-});
+})
+
+var httpsConfig={}
+var httpsServer=null
+if(config.https!=undefined){httpsConfig=https}
+
+const setHttpsServer=()=>{
+	try{
+		var httpsOptions={}
+		httpsOptions={
+			key:fs.readFileSync(httpsConfig.key),
+			cert:fs.readFileSync(httpsConfig.cert)
+		}
+		httpsServer=https.createServer(httpsOptions,listenProcess).listen(httpsConfig.port,hostname,()=>{
+			console.log(`-- pikaService running at https://${hostname}:${httpsConfig.port}/`)
+		})
+	}catch(e){}
+}
+
+const updateHttps=()=>{
+	httpsServer.close(()=>{
+		try{
+			sublib.execSync(httpsOptions.update.command)
+		}catch(e){}
+		setHttpsServer()
+		try{
+			setTimeout(updateHttps,httpsOptions.update.period)
+		}catch(e){}
+	})
+	httpsServer=null
+}
+
+if(httpsConfig.update!=undefined){
+	setHttpsServer()
+}else{
+	updateHttps()
+}

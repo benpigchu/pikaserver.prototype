@@ -39,5 +39,14 @@
 		"127.0.0.0":{
 			"staticPath":"/home/benpigchu/local"
 		}
+	},
+	"https":{
+		"port":"443",
+		"key":"/etc/letsencrypt/live/site.com/privkey.pem",
+		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",
+		"update":{
+			"period":1728000000,
+			"command":"/home/letsencrypt renew"
+		}
 	}
 }
