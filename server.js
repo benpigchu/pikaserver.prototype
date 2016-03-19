@@ -365,26 +365,26 @@ const updateHttps=()=>{
 		httpsServer.close(()=>{
 			console.log(`-- trying to update the cert`)
 			try{
-				sublib.execSync(httpsOptions.update.command)
+				sublib.execSync(httpsConfig.update.command)
 			}catch(e){}
 			setHttpsServer()
 			try{
-				setTimeout(updateHttps,httpsOptions.update.period)
+				setTimeout(updateHttps,httpsConfig.update.period)
 			}catch(e){}
 		})
 	}else{
 		try{
-			sublib.execSync(httpsOptions.update.command)
+			sublib.execSync(httpsConfig.update.command)
 		}catch(e){}
 		setHttpsServer()
 		try{
-			setTimeout(updateHttps,httpsOptions.update.period)
+			setTimeout(updateHttps,httpsConfig.update.period)
 		}catch(e){}
 	}
 	httpsServer=null
 }
 
-if(httpsConfig.update!=undefined){
+if(httpsConfig.update==undefined){
 	setHttpsServer()
 }else{
 	updateHttps()
