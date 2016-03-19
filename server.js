@@ -211,7 +211,7 @@ const staticFileReturner=(req,res,reqId)=>{
 					var rawReq=decodeURIComponent(reqUrl.pathname)
 					if(rawReq[rawReq.length-1]!="/"){
 						console.log(`---- [${reqId}]req do not end with '/'`)
-						res.writeHead(301,{"Location":"reqUrl.pathname"+"/"})
+						res.writeHead(301,{"Location":reqUrl.pathname+"/"})
 						res.end()
 						return
 					}
