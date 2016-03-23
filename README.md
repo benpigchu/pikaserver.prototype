@@ -26,7 +26,6 @@ Just write something you want to run when the server start, it even can be not-n
 //!!notice: my json praser do not support comment, this wont fix
 {
 	"serviceAddress":"0.0.0.0",//address of http service (default 0.0.0.0)
-	"serviceAddressv6":"::",//address of http service in ipv6 (default ::)
 	"httpServicePort":"80",//port of http service (default 80)
 	"staticPath":"/home/benpigchu/static/",//directory to store static files (default /home/user/static/)
 	"errorMessage":{

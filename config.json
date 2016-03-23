@@ -1,6 +1,5 @@
 {
-	"serviceAddress":"0.0.0.0",
-	"serviceAddressv6":"::",
+	"serviceAddress":"::",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
 	"errorMessage":{
