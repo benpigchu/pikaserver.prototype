@@ -1,9 +1,10 @@
 {
 	"serviceAddress":"0.0.0.0",
+	"serviceAddressv6":"::",
 	"httpServicePort":"80",
 	"staticPath":"/home/benpigchu/static/",
 	"errorMessage":{
-		"400":"WTF"	
+		"400":"WTF"
 	},
 	"errorPage":{
 		"404":"/home/benpigchu/static/404.html"
@@ -32,7 +33,7 @@
 		{
 			"name":"anotherExample",
 			"command":"node",
-			"arg":["noneHttpApps/example.js"]	
+			"arg":["noneHttpApps/example.js"]
 		}
 	],
 	"domainSetting":{

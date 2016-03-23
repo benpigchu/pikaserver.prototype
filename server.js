@@ -8,6 +8,7 @@ const util=require("util")
 const zlib=require("zlib")
 
 const defaultHostname="0.0.0.0"
+const defaultHostnamev6="::"
 const defaultPort=80
 const defaultStaticPath="/home/user/static/"
 
@@ -37,6 +38,7 @@ var config={}
 try{config=require("./config.json")}catch(err){}
 
 var hostname=defaultHostname
+var hostnamev6=defaultHostnamev6
 var port=defaultPort
 var staticPath=defaultStaticPath
 var errorMessage={}
@@ -49,6 +51,7 @@ var staticLinking=[]
 var domainSetting={}
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
+if(config.serviceAddressv6!=undefined){hostnamev6=config.serviceAddressv6}
 if(config.httpServicePort!=undefined){port=config.httpServicePort}
 if(config.staticPath!=undefined){staticPath=config.staticPath}
 if(config.errorMessage!=undefined){errorMessage=config.errorMessage}
@@ -107,7 +110,7 @@ const sendError=(req,res,code,reqId)=>{
 		messages=domainSetting[domain].errorMessage
 		pages=domainSetting[domain].errorPage
 	}
-	var sendErrorMessage=()=>{		
+	var sendErrorMessage=()=>{
 		res.writeHead(code,{"Content-Type":"text/plain"})
 		if(code in messages){
 			res.end(messages[code])
@@ -127,7 +130,7 @@ const sendError=(req,res,code,reqId)=>{
 						sendErrorMessage()
 					}else{
 						if(mimetype[path.extname(pages[code])]!=undefined){
-							res.setHeader("Content-Type",mimetype[path.extname(pages[code])])						
+							res.setHeader("Content-Type",mimetype[path.extname(pages[code])])
 						}
 						var encode
 						if(req.headers['accept-encoding']!=undefined){
@@ -145,7 +148,7 @@ const sendError=(req,res,code,reqId)=>{
 							console.log(`---- [${reqId}]use deflate`)
 							rs.pipe(zlib.createDeflate()).pipe(res)
 						}else{
-							console.log(`---- [${reqId}]use raw`)		
+							console.log(`---- [${reqId}]use raw`)
 							res.writeHead(code)
 							rs.pipe(res)
 						}
@@ -175,7 +178,7 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 	}
 	console.log(`---- [${reqId}]modified`)
 	if(mimetype[path.extname(filePath)]!=undefined){
-		res.setHeader("Content-Type",mimetype[path.extname(filePath)])						
+		res.setHeader("Content-Type",mimetype[path.extname(filePath)])
 	}
 	res.setHeader("Last-Modified",returnMTime)
 	var encode
@@ -195,7 +198,7 @@ const sendFile=(req,res,filePath,stats,reqId)=>{
 		console.log(`---- [${reqId}]use deflate`)
 		rs.pipe(zlib.createDeflate()).pipe(res)
 	}else{
-		console.log(`---- [${reqId}]use raw`)		
+		console.log(`---- [${reqId}]use raw`)
 		res.writeHead(200)
 		rs.pipe(res)
 	}
@@ -335,57 +338,16 @@ const listenProcess=(req,res)=>{
 		}
 	})
 	if(!isApps){
-		staticFileReturner(req,res,reqId)	
+		staticFileReturner(req,res,reqId)
 	}
 }
 
 var httpsConfig={}
 var httpsServer=null
+var httpsServerv6=null
 if(config.https!=undefined){httpsConfig=config.https}
 
-const setHttpsServer=()=>{
-	try{
-		var httpsOptions={}
-		httpsOptions={
-			key:fs.readFileSync(httpsConfig.key),
-			cert:fs.readFileSync(httpsConfig.cert)
-		}
-		httpsServer=https.createServer(httpsOptions,(req,res)=>{
-			if(httpsConfig.hsts){
-					res.setHeader("Strict-Transport-Security","max-age=7776000")
-			}
-			listenProcess(req,res)
-		}).listen(httpsConfig.port,hostname,()=>{
-			console.log(`-- pikaService running at https://${hostname}:${httpsConfig.port}/`)
-		})
-	}catch(e){}
-}
-
-const updateHttps=()=>{
-	if(httpsServer!=null){
-		httpsServer.close(()=>{
-			console.log(`-- trying to update the cert`)
-			try{
-				sublib.execSync(httpsConfig.update.command)
-			}catch(e){}
-			setHttpsServer()
-			try{
-				setTimeout(updateHttps,httpsConfig.update.period)
-			}catch(e){}
-		})
-		httpsServer=null
-	}else{
-		try{
-			sublib.execSync(httpsConfig.update.command)
-		}catch(e){}
-		setHttpsServer()
-		try{
-			setTimeout(updateHttps,httpsConfig.update.period)
-		}catch(e){}
-	}
-}
-
-http.createServer((req,res)=>{
+const httpListener=(req,res)=>{
 	if(httpsConfig.hsts){
 		if(httpsServer!=null){
 			res.setHeader("Strict-Transport-Security","max-age=7776000")
@@ -395,8 +357,87 @@ http.createServer((req,res)=>{
 		}
 	}
 	listenProcess(req,res)
-}).listen(port,hostname,()=>{
+}
+
+const httpsListener=(req,res)=>{
+	if(httpsConfig.hsts){
+		res.setHeader("Strict-Transport-Security","max-age=7776000")
+	}
+	listenProcess(req,res)
+}
+const setHttpsServer=()=>{
+	try{
+		var httpsOptions={}
+		httpsOptions={
+			key:fs.readFileSync(httpsConfig.key),
+			cert:fs.readFileSync(httpsConfig.cert)
+		}
+		httpsServer=https.createServer(httpsOptions,httpsListener).listen(httpsConfig.port,hostname,()=>{
+			console.log(`-- pikaService running at https://${hostname}:${httpsConfig.port}/`)
+		})
+		httpsServer=https.createServer(httpsOptions,httpsListener).listen(httpsConfig.port,hostnamev6,()=>{
+			console.log(`-- pikaService running at https://${hostnamev6}:${httpsConfig.port}/`)
+		})
+	}catch(e){}
+}
+
+const updateHttps=()=>{
+	if(httpsServer!=null){
+		httpsServer.close(()=>{
+			if(httpsServerv6!=null){
+				httpsServerv6.close(()=>{
+					console.log(`-- trying to update the cert`)
+					try{
+						sublib.execSync(httpsConfig.update.command)
+					}catch(e){}
+					setHttpsServer()
+					try{
+						setTimeout(updateHttps,httpsConfig.update.period)
+					}catch(e){}
+				})
+				httpsServerv6=null
+			}else{
+				console.log(`-- trying to update the cert`)
+				try{
+					sublib.execSync(httpsConfig.update.command)
+				}catch(e){}
+				setHttpsServer()
+				try{
+					setTimeout(updateHttps,httpsConfig.update.period)
+				}catch(e){}
+			}
+		})
+		httpsServer=null
+	}else{
+		if(httpsServerv6!=null){
+			httpsServerv6.close(()=>{
+				console.log(`-- trying to update the cert`)
+				try{
+					sublib.execSync(httpsConfig.update.command)
+				}catch(e){}
+				setHttpsServer()
+				try{
+					setTimeout(updateHttps,httpsConfig.update.period)
+				}catch(e){}
+			})
+			httpsServerv6=null
+		}else{
+			try{
+				sublib.execSync(httpsConfig.update.command)
+			}catch(e){}
+			setHttpsServer()
+			try{
+				setTimeout(updateHttps,httpsConfig.update.period)
+			}catch(e){}
+		}
+	}
+}
+
+http.createServer(httpListener).listen(port,hostname,()=>{
 	console.log(`-- pikaService running at http://${hostname}:${port}/`)
+})
+http.createServer(httpListener).listen(port,hostnamev6,()=>{
+	console.log(`-- pikaService running at http://${hostnamev6}:${port}/`)
 })
 
 if(httpsConfig.update==undefined){

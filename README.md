@@ -14,7 +14,7 @@ More detials will added here after the app-plugin system finished.
 
 ## How to use http apps plugin
 
-Just write something export a function(req,res,reqId), where req and res is http.IncomingMessage and http.ServerRespond respectly, and reqId is Id of request for logging. 
+Just write something export a function(req,res,reqId), where req and res is http.IncomingMessage and http.ServerRespond respectly, and reqId is Id of request for logging.
 Then all you need to do is add it to the httpApps list in config.json and determine what pathPrefix will it listen.
 
 ## How to use none-http apps plugin
@@ -26,10 +26,11 @@ Just write something you want to run when the server start, it even can be not-n
 //!!notice: my json praser do not support comment, this wont fix
 {
 	"serviceAddress":"0.0.0.0",//address of http service (default 0.0.0.0)
+	"serviceAddressv6":"::",//address of http service in ipv6 (default ::)
 	"httpServicePort":"80",//port of http service (default 80)
 	"staticPath":"/home/benpigchu/static/",//directory to store static files (default /home/user/static/)
 	"errorMessage":{
-		"400":"WTF"	
+		"400":"WTF"
 	},//custome error message
 	"errorPage":{
 		"404":"/home/benpigchu/static/404.html"
@@ -37,7 +38,7 @@ Just write something you want to run when the server start, it even can be not-n
 	"staticRedirection":[
 		{"from":"/from","to":"/to"},
 		{"from":"/begin/index.html","to":"/end.html"}//this will not make /begin/ redirected to /end.html
-	],//folder or file redirection for static file service 
+	],//folder or file redirection for static file service
 	"staticRangeRedirection":[
 		{"from":"/origin","to":"/origin/index.html"}
 	],//map a folder to a returning file
