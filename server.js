@@ -7,7 +7,7 @@ const path=require("path")
 const util=require("util")
 const zlib=require("zlib")
 
-const defaultHostname="0.0.0.0"
+const defaultHostname="::"
 const defaultPort=80
 const defaultStaticPath="/home/user/static/"
 
