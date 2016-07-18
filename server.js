@@ -61,24 +61,26 @@ if(config.staticLinking!=undefined){staticLinking=config.staticLinking}
 if(config.domainSetting!=undefined){domainSetting=config.domainSetting}
 
 
+const defaultAppCallback=(req,res,reqId)=>{
+	console.log(`---- [${reqId}]undefined app method`)
+	sendError(req,res,500,reqId)
+}
+
 const generateApps=function(config,domain){
 	var appList=[]
 	config.forEach((appConfig)=>{
 		var app={
 			name:appConfig.name,
 			pathPrefix:appConfig.pathPrefix,
-			method:(req,res,reqId)=>{
-				console.log(`---- [${reqId}]undefined app method`)
-				sendError(req,res,500,reqId)
-			}
+			content:{}
 		}
 		var appPath=appConfig.file
 		if(appPath[0]!="/"){appPath="./"+appPath}
 		try{
-			var appMethod=require(appPath)
-			if(!(appMethod instanceof Function)){throw TypeError}
-			app.method=appMethod
+			app.content=require(appPath)
 		}catch(err){}
+		if((typeof app.content)!=="object"){app.content={}}
+		if(!(app.content.callback instanceof Function)){app.content.callback=defaultAppCallback}
 		appList.push(app)
 		console.log(`-- loaded http app: ${app.name} under ${domain}`)
 	})
@@ -131,7 +133,7 @@ const sendError=(req,res,code,reqId)=>{
 						}
 						var encode
 						if(req.headers['accept-encoding']!=undefined){
-							encode=req.headers['accept-encoding'].split(", ")
+							encode=req.headers['accept-encoding'].split(",").map((s)=>s.trim())
 						}else{
 							encode=[]
 						}
@@ -329,7 +331,7 @@ const listenProcess=(req,res)=>{
 	application.forEach((app)=>{
 		if((reqPath+"/").slice(0,app.pathPrefix.length)==app.pathPrefix){
 			console.log(`---- [${reqId}]use app: ${app.name}`)
-			app.method(req,res,reqId)
+			app.content.callback(req,res,reqId)
 			isApps=true
 			return
 		}
