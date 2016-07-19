@@ -18,6 +18,9 @@
 	"staticRangeRejection":[
 		"/nothing"
 	],
+	"staticDirectLinking":[
+		{"from":"/here.html","to":"/home/benpigchu/to.html"}
+	],
 	"staticLinking":[
 		{"from":"/here","to":"/home/benpigchu/to"}
 	],

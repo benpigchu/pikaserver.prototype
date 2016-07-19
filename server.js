@@ -46,6 +46,7 @@ var staticRedirection=[]
 var staticRangeRedirection=[]
 var staticRangeRejection=[]
 var staticLinking=[]
+var staticDirectLinking=[]
 var domainSetting={}
 
 if(config.serviceAddress!=undefined){hostname=config.serviceAddress}
@@ -58,6 +59,7 @@ if(config.staticRedirection!=undefined){staticRedirection=config.staticRedirecti
 if(config.staticRangeRedirection!=undefined){staticRangeRedirection=config.staticRangeRedirection}
 if(config.staticRangeRejection!=undefined){staticRangeRejection=config.staticRangeRejection}
 if(config.staticLinking!=undefined){staticLinking=config.staticLinking}
+if(config.staticDirectLinking!=undefined){staticDirectLinking=config.staticDirectLinking}
 if(config.domainSetting!=undefined){domainSetting=config.domainSetting}
 
 
@@ -98,6 +100,7 @@ for(var domain in domainSetting){
 	if(domainSetting[domain].staticRangeRedirection==undefined){domainSetting[domain].staticRangeRedirection=[]}
 	if(domainSetting[domain].staticRangeRejection==undefined){domainSetting[domain].staticRangeRejection=[]}
 	if(domainSetting[domain].staticLinking==undefined){domainSetting[domain].staticLinking=[]}
+	if(domainSetting[domain].staticDirectLinking==undefined){domainSetting[domain].staticDirectLinking=[]}
 	domainSetting[domain].apps=generateApps(domainSetting[domain].httpApps,domain)
 }
 
@@ -209,12 +212,14 @@ const staticFileReturner=(req,res,reqId)=>{
 	var redirection=staticRedirection
 	var rangeRedirection=staticRangeRedirection
 	var rangeRejection=staticRangeRejection
+	var direLinking=staticDirectLinking
 	var linking=staticLinking
 	var rootPath=staticPath
 	if(domain in domainSetting){
 		redirection=domainSetting[domain].staticRedirection
 		rangeRedirection=domainSetting[domain].staticRangeRedirection
 		rangeRejection=domainSetting[domain].staticRangeRejection
+		direLinking=domainSetting[domain].staticDirectLinking
 		linking=domainSetting[domain].staticLinking
 		rootPath=domainSetting[domain].staticPath
 	}
@@ -250,13 +255,24 @@ const staticFileReturner=(req,res,reqId)=>{
 	console.log("here")
 	var filePath
 	var isJumped=false
-	for(var i=0;i<linking.length;i++){
-		var begin=linking[i].from
-		if(begin[begin.length-1]!="/"){begin+="/"}
-		if((reqPath+"/").slice(0,begin.length)==begin){
-			filePath=path.normalize(path.join(linking[i].to,reqPath.slice(linking[i].from.length)))
+	for(var i=0;i<direLinking.length;i++){
+		var begin=direLinking[i].from
+		if(begin[begin.length-1]=="/"){begin=begin.slice(0,begin.length-1)}
+		if((reqPath==begin)||(reqPath==begin+"/")){
+			filePath=direLinking[i].to
 			isJumped=true
 			break
+		}
+	}
+	if(!isJumped){
+		for(var i=0;i<linking.length;i++){
+			var begin=linking[i].from
+			if(begin[begin.length-1]!="/"){begin+="/"}
+			if((reqPath+"/").slice(0,begin.length)==begin){
+				filePath=path.normalize(path.join(linking[i].to,reqPath.slice(linking[i].from.length)))
+				isJumped=true
+				break
+			}
 		}
 	}
 	if(!isJumped){

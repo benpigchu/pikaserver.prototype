@@ -44,6 +44,9 @@ Just write something you want to run when the server start, it even can be not-n
 	"staticRangeRejection":[
 		"/nothing"
 	],//any file under the path will mark as 404
+	"staticDirectLinking":[
+		{"from":"/here.html","to":"/home/benpigchu/to.html"}
+	],//similiar to the staticRedirection, but the to file is local path
 	"staticLinking":[
 		{"from":"/here","to":"/home/benpigchu/to"}
 	],//similiar to the staticRedirection, but the to file is local path
