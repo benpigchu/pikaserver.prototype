@@ -21,7 +21,8 @@ const mimetype={
 	".jpg":"image/jpeg",
 	".jpeg":"image/jpg",
 	".gif":"image/gif",
-	".ico":"image/vnd.microsoft.icon"
+	".ico":"image/vnd.microsoft.icon",
+	".rss":"application/rss+xml"
 }
 
 const defaultErrorMessage={
