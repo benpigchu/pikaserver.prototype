@@ -1,0 +1,16 @@
+{
+	"host":"::",
+	"port":"80",
+	"https":{
+		"open":false,
+		"hsts":true,
+		"port":"443",
+		"key":"/etc/letsencrypt/live/site.com/privkey.pem",
+		"cert":"/etc/letsencrypt/live/site.com/fullchain.pem",
+		"renew":{
+			"open":false,
+			"period":1728000000,
+			"command":"/home/letsencrypt/letsencrypt-auto renew"
+		}
+	}
+}
