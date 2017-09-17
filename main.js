@@ -1,4 +1,6 @@
 const fs=require("fs")
+const url=require("url")
+const path=require("path")
 const http=require("http")
 const http2=require("http2")
 const child=require("child_process")
@@ -32,15 +34,43 @@ const getConfig=()=>{
 	return config
 }
 const config=getConfig()
-const{host="::",port:httpPort="80",https={}}=config
+const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[]}=config
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
 const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
 
+const actionBuilders={}
+
+const actionBuilder=(schema)=>{
+	if(schema.type in actionBuilders){
+		return actionBuilder(schema)
+	}else{
+		return(context)=>false
+	}
+}
+
+const actions=actionsSchema.map(actionBuilder)
+
+const defaultAction=(context)=>{
+	context.respond.writeHead(200)
+	context.respond.end("hello")
+}
+
+let reqNum=0
 const handler=(req,res)=>{
 	const reqId=Date.now()+reqNum
-	console.log(`-- [${reqId}]request heared at ${new Date()}`)
-	const reqUrl=url.parse(req.url)
-	console.log(`---- [${reqId}]ask for ${reqUrl.pathname} under ${domain} with ${reqUrl.search} and ${reqUrl.hash}`)
+	reqNum++
+	console.log(`-- [${reqId}] request heared at ${new Date()}`)
+	const domain=req.headers.host
+	const reqUrl=url.parse(req.url,true)
+	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "${reqUrl.search}>"`)
+	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:reqUrl.pathname,reqId:reqId}
+	for(const action of actions){
+		if(action(context)){
+			return
+		}
+	}
+	console.log(`---- [${reqId}] no matched action, try serve static file`)
+	defaultAction(context)
 }
 
 let httpServer

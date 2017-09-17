@@ -1,6 +1,10 @@
 {
 	"host":"::",
 	"port":"80",
+	"basePath":"/home/user/static",
+	"actions":[
+
+	],
 	"https":{
 		"open":false,
 		"hsts":true,
