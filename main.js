@@ -2,6 +2,7 @@ const fs=require("fs")
 const url=require("url")
 const path=require("path")
 const util=require("util")
+const zlib=require("zlib")
 const http=require("http")
 const http2=require("http2")
 const child=require("child_process")
@@ -24,6 +25,9 @@ const defaultErrorMessage={
 	404:"pikaServiceError: not found\n",
 	500:"pikaServiceError: internal server error\n"
 }
+
+const serverStartTime=new Date()
+
 const getConfig=()=>{
 	let config={}
 	try{
@@ -39,16 +43,39 @@ const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},action
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
 const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
 
-const serveStream=async(context,stream)=>{
-	// TODO: encoding
+const encoders=[{name:"gzip",builder:()=>zlib.createGzip()},{name:"deflate",builder:()=>zlib.createDeflate()}]
+
+const serveStream=async(context,stream,code)=>{
+	const encode=(context.request.headers["accept-encoding"]||"").split(",").map((str)=>str.trim())
+	console.log(`---- [${context.reqId}] supported encoding: ${encode}`)
+	for(const encoder of encoders){
+		if(encode.includes(encoder.name)){
+			context.respond.writeHead(code,{"Content-Encoding":encoder.name})
+			console.log(`---- [${context.reqId}] use encoding: ${encoder.name}`)
+			stream.pipe(encoder.builder()).pipe(context.respond)
+			return
+		}
+	}
+	context.respond.writeHead(code)
 	stream.pipe(context.respond)
 }
 
 const serveConfirmedFile=async(context,filepath)=>{
-	// TODO: cache control
+	let stat=context.stat
+	let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stats.mtime
+	context.respond.setHeader("Last-Modified",mtime.toUTCString())
+	let ifModifiedAfter=Date.parse(context.request.headers["if-modified-since"])
+	if(!isNaN(ifModifiedAfter)){
+		console.log(`---- [${context.reqId}] detected header if-modified-since: ${new Date(ifModifiedAfter).toUTCString()}(${ifModifiedAfter})`)
+		if(mtime.getTime()-ifModifiedAfter<=999){
+			console.log(`---- [${context.reqId}] file is not modified, send 304`)
+			context.respond.writeHead(304)
+			context.respond.end()
+			return
+		}
+	}
 	context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
-	context.respond.writeHead(200)
-	await serveStream(context,fs.createReadStream(filepath),mimetype[path.extname(filepath)])
+	await serveStream(context,fs.createReadStream(filepath),200)
 }
 
 const serveFile=async(context,filepath)=>{
@@ -61,21 +88,23 @@ const serveFile=async(context,filepath)=>{
 		context.respond.end("not find")
 		return
 	}
-	let stat=await util.promisify(fs.stat)(filepath)
+	const stat=await util.promisify(fs.stat)(filepath)
 	if(stat.isDirectory()){
 		console.log(`---- [${context.reqId}] requested file is a directory`)
 		if(context.url.pathname[context.url.pathname.length-1]!=="/"){
 			console.log(`---- [${context.reqId}] requested path do not end with "/", 301 redirect`)
-			context.respond.writeHead(301,{Location:context.url.pathname+"/"})
+			context.respond.writeHead(301,{Location:`${context.url.pathname}/`})
 			context.respond.end()
 		}else{
 			console.log(`---- [${context.reqId}] try /index.html`)
-			let indexpath=path.join(filepath,"/index.html")
+			const indexpath=path.join(filepath,"/index.html")
 			try{
 				await util.promisify(fs.access)(indexpath,fs.constants.R_OK)
-				if((await util.promisify(fs.stat)(indexpath)).isDirectory()){
+				const stat=(await util.promisify(fs.stat)(indexpath))
+				if(stat.isDirectory()){
 					throw new Error("index is directory")
 				}
+				context.stat=stat
 			}catch(err){
 				console.log(`---- [${context.reqId}] index not find`)
 				context.respond.writeHead(404)
@@ -85,6 +114,7 @@ const serveFile=async(context,filepath)=>{
 			await serveConfirmedFile(context,indexpath)
 		}
 	}else{
+		context.stat=stat
 		await serveConfirmedFile(context,filepath)
 	}
 }
@@ -99,9 +129,9 @@ const actionBuilders={}
 const actionBuilder=(schema)=>{
 	if(schema.type in actionBuilders){
 		return actionBuilder(schema)
-	}else{
-		return(context)=>false
 	}
+	return(context)=>false
+
 }
 
 const actions=actionsSchema.map(actionBuilder)
@@ -115,6 +145,12 @@ const handler=async(req,res)=>{
 	const reqUrl=url.parse(req.url,true)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
 	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:reqUrl.pathname,reqId:reqId}
+	if(decodeURIComponent(reqUrl.pathname).match(/(^|\/)\.\.($|\/)/)!==null){
+		console.log(`---- [${reqId}] bad request: include ".."`)
+		context.respond.writeHead(400)
+		context.respond.end("bad request")
+		return
+	}
 	for(const action of actions){
 		if(await action(context)){
 			return
