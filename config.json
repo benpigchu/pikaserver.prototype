@@ -2,6 +2,12 @@
 	"host":"::",
 	"port":"80",
 	"basePath":"/home/user/static",
+	"errorMessage":{
+		"400":"WTF"
+	},
+	"errorPage":{
+		"404":"404.html"
+	},
 	"actions":[
 
 	],

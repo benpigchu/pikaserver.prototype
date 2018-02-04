@@ -39,7 +39,7 @@ const getConfig=()=>{
 	return config
 }
 const config=getConfig()
-const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[]}=config
+const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[],errorMessage,errorPage}=config
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
 const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
 
@@ -60,33 +60,38 @@ const serveStream=async(context,stream,code)=>{
 	stream.pipe(context.respond)
 }
 
-const serveConfirmedFile=async(context,filepath)=>{
-	let stat=context.stat
-	let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stats.mtime
-	context.respond.setHeader("Last-Modified",mtime.toUTCString())
-	let ifModifiedAfter=Date.parse(context.request.headers["if-modified-since"])
-	if(!isNaN(ifModifiedAfter)){
-		console.log(`---- [${context.reqId}] detected header if-modified-since: ${new Date(ifModifiedAfter).toUTCString()}(${ifModifiedAfter})`)
-		if(mtime.getTime()-ifModifiedAfter<=999){
-			console.log(`---- [${context.reqId}] file is not modified, send 304`)
-			context.respond.writeHead(304)
-			context.respond.end()
-			return
+const serveConfirmedFile=async(context,filepath,code,checkTime)=>{
+	if(checkTime&&(context.stat!==undefined)){
+		let stat=context.stat
+		let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stats.mtime
+		context.respond.setHeader("Last-Modified",mtime.toUTCString())
+		let ifModifiedAfter=Date.parse(context.request.headers["if-modified-since"])
+		if(!isNaN(ifModifiedAfter)){
+			console.log(`---- [${context.reqId}] detected header if-modified-since: ${new Date(ifModifiedAfter).toUTCString()}(${ifModifiedAfter})`)
+			if(mtime.getTime()-ifModifiedAfter<=999){
+				console.log(`---- [${context.reqId}] file is not modified, send 304`)
+				context.respond.writeHead(304)
+				context.respond.end()
+				return
+			}
 		}
+		context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
 	}
-	context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
-	await serveStream(context,fs.createReadStream(filepath),200)
+	await serveStream(context,fs.createReadStream(filepath),code)
 }
 
-const serveFile=async(context,filepath)=>{
+const serveFile=async(context,filepath,code=200,checkTime=true,throwInsteadOf404=false)=>{
 	console.log(`---- [${context.reqId}] ask for ${filepath}`)
 	try{
 		await util.promisify(fs.access)(filepath,fs.constants.R_OK)
 	}catch(err){
 		console.log(`---- [${context.reqId}] not find`)
-		context.respond.writeHead(404)
-		context.respond.end("not find")
-		return
+		if(throwInsteadOf404){
+			throw new Error("file not found")
+		}else{
+			serveError(context,404)
+			return
+		}
 	}
 	const stat=await util.promisify(fs.stat)(filepath)
 	if(stat.isDirectory()){
@@ -107,16 +112,33 @@ const serveFile=async(context,filepath)=>{
 				context.stat=stat
 			}catch(err){
 				console.log(`---- [${context.reqId}] index not find`)
-				context.respond.writeHead(404)
-				context.respond.end("not find")
-				return
+				if(throwInsteadOf404){
+					throw new Error("file not found")
+				}else{
+					serveError(context,404)
+					return
+				}
 			}
-			await serveConfirmedFile(context,indexpath)
+			await serveConfirmedFile(context,indexpath,code,checkTime)
 		}
 	}else{
 		context.stat=stat
-		await serveConfirmedFile(context,filepath)
+		await serveConfirmedFile(context,filepath,code,checkTime)
 	}
+}
+
+const serveError=async(context,errorCode)=>{
+	if(errorCode in errorPage){
+		let filepath=path.resolve(basePath,errorPage[errorCode])
+		try{
+			await serveFile(context,filepath,errorCode,false,true)
+			return
+		}catch(err){
+			console.log(`---- [${context.reqId}] error page for ${errorCode} (${filepath}) not found`)
+		}
+	}
+	context.respond.writeHead(errorCode)
+	context.respond.end((errorCode in errorMessage)?(errorMessage[errorCode]):(defaultErrorMessage[errorCode]||"pikaServiceError: unknown error\n"))
 }
 
 const defaultAction=async(context)=>{
@@ -128,10 +150,9 @@ const actionBuilders={}
 
 const actionBuilder=(schema)=>{
 	if(schema.type in actionBuilders){
-		return actionBuilder(schema)
+		return actionBuilders[schema.type](schema)
 	}
 	return(context)=>false
-
 }
 
 const actions=actionsSchema.map(actionBuilder)
@@ -144,11 +165,10 @@ const handler=async(req,res)=>{
 	const domain=req.headers.host
 	const reqUrl=url.parse(req.url,true)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
-	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:reqUrl.pathname,reqId:reqId}
-	if(decodeURIComponent(reqUrl.pathname).match(/(^|\/)\.\.($|\/)/)!==null){
+	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:decodeURIComponent(reqUrl.pathname),reqId:reqId}
+	if(context.processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
 		console.log(`---- [${reqId}] bad request: include ".."`)
-		context.respond.writeHead(400)
-		context.respond.end("bad request")
+		serveError(context,400)
 		return
 	}
 	for(const action of actions){
@@ -206,12 +226,13 @@ const updateHttps=()=>new Promise((res,rej)=>{
 	child.exec(renewCommand,(err)=>{
 		if(err){
 			rej(err)
+		}else{
+			httpsServer.close(()=>{
+				console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
+				httpsServer=null
+				setupHttpsServer().then(res)
+			})
 		}
-		httpsServer.close(()=>{
-			console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
-			httpsServer=null
-			setupHttpsServer().then(res)
-		})
 	})
 })
 
