@@ -128,8 +128,28 @@ const serveFile=async(context,filepath,code=200,checkTime=true,throwInsteadOf404
 }
 
 const serveError=async(context,errorCode)=>{
+	let customErrorPage=context.errorPage
+	if(customErrorPage!==undefined){
+		if(errorCode in customErrorPage){
+			let filepath=path.resolve(context.baseErrorPath,customErrorPage[errorCode])
+			try{
+				await serveFile(context,filepath,errorCode,false,true)
+				return
+			}catch(err){
+				console.log(`---- [${context.reqId}] error page for ${errorCode} (${filepath}) not found`)
+			}
+		}
+	}
+	let customErrorMessage=context.errorMessage
+	if(customErrorMessage!==undefined){
+		if(errorCode in customErrorMessage){
+			context.respond.writeHead(errorCode)
+			context.respond.end(customErrorMessage[errorCode])
+			return
+		}
+	}
 	if(errorCode in errorPage){
-		let filepath=path.resolve(basePath,errorPage[errorCode])
+		let filepath=path.resolve(context.baseErrorPath,errorPage[errorCode])
 		try{
 			await serveFile(context,filepath,errorCode,false,true)
 			return
@@ -142,7 +162,7 @@ const serveError=async(context,errorCode)=>{
 }
 
 const defaultAction=async(context)=>{
-	await serveFile(context,path.join(basePath,context.processedPath))
+	await serveFile(context,path.join(context.basePath,context.processedPath))
 	return true
 }
 
@@ -165,19 +185,29 @@ const handler=async(req,res)=>{
 	const domain=req.headers.host
 	const reqUrl=url.parse(req.url,true)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
-	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:decodeURIComponent(reqUrl.pathname),reqId:reqId}
+	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:decodeURIComponent(reqUrl.pathname),reqId:reqId,basePath:basePath,baseErrorPath:basePath}
 	if(context.processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
 		console.log(`---- [${reqId}] bad request: include ".."`)
 		serveError(context,400)
 		return
 	}
-	for(const action of actions){
-		if(await action(context)){
-			return
+	try{
+
+		for(const action of actions){
+			if(await action(context)){
+				return
+			}
 		}
+		console.log(`---- [${reqId}] fallback to default action, try serve static file`)
+		await defaultAction(context)
+	}catch(err){
+		let code=err.code
+		if(!(Number.isInteger(code)&&code<600&&code>=100)){
+			code=500
+		}
+		console.log(`---- [${reqId}] error when handling request, code=${code}, err:${err}`)
+		await serveError(context,code)
 	}
-	console.log(`---- [${reqId}] no matched action, try serve static file`)
-	await defaultAction(context)
 }
 
 let httpServer
@@ -217,7 +247,7 @@ const setupHttpsServer=()=>new Promise((res,rej)=>{
 			httpsServer=null
 			rej(err)
 		}
-		console.log(`-- pikaService(http/1.1&http/2 over TLS) running at http://${host}:${httpsPort}/`)
+		console.log(`-- pikaService(http/1.1&http/2 over TLS) running at http://[${host}]:${httpsPort}/`)
 	})
 })
 
