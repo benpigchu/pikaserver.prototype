@@ -96,7 +96,7 @@ const serveFile=async(context,filepath,code=200,checkTime=true,throwInsteadOf404
 	const stat=await util.promisify(fs.stat)(filepath)
 	if(stat.isDirectory()){
 		console.log(`---- [${context.reqId}] requested file is a directory`)
-		if(context.url.pathname[context.url.pathname.length-1]!=="/"){
+		if((context.processedPath===decodeURIComponent(context.url.pathname))&&(context.url.pathname[context.url.pathname.length-1]!=="/")){
 			console.log(`---- [${context.reqId}] requested path do not end with "/", 301 redirect`)
 			context.respond.writeHead(301,{Location:`${context.url.pathname}/`})
 			context.respond.end()
@@ -166,7 +166,27 @@ const defaultAction=async(context)=>{
 	return true
 }
 
-const actionBuilders={}
+const rangeBlockBuilder=(schema)=>(context)=>{
+	if(path.relative(schema.path,context.processedPath)[0]!=="."){
+		console.log(`---- [${context.reqId}] blocked: child of "${schema.path}"`)
+		serveError(context,404)
+		return true
+	}
+	return false
+}
+
+const pathRewriteBuilder=(schema)=>(context)=>{
+	if(context.processedPath===schema.from){
+		console.log(`---- [${context.reqId}] rewrited: from "${schema.from}" to "${schema.to}"`)
+		context.processedPath=schema.to
+	}
+	return false
+}
+
+const actionBuilders={
+	rangeBlock:rangeBlockBuilder,
+	pathRewrite:pathRewriteBuilder
+}
 
 const actionBuilder=(schema)=>{
 	if(schema.type in actionBuilders){
