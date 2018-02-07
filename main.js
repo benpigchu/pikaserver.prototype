@@ -96,7 +96,7 @@ const serveFile=async(context,filepath,code=200,checkTime=true,throwInsteadOf404
 	const stat=await util.promisify(fs.stat)(filepath)
 	if(stat.isDirectory()){
 		console.log(`---- [${context.reqId}] requested file is a directory`)
-		if((context.processedPath===decodeURIComponent(context.url.pathname))&&(context.url.pathname[context.url.pathname.length-1]!=="/")){
+		if((context.processedPath[context.processedPath-1]!=="/")&&(context.url.pathname[context.url.pathname.length-1]!=="/")){
 			console.log(`---- [${context.reqId}] requested path do not end with "/", 301 redirect`)
 			context.respond.writeHead(301,{Location:`${context.url.pathname}/`})
 			context.respond.end()
@@ -166,16 +166,16 @@ const defaultAction=async(context)=>{
 	return true
 }
 
-const rangeBlockBuilder=(schema)=>(context)=>{
+const rangeBlockBuilder=(schema)=>async(context)=>{
 	if(path.relative(schema.path,context.processedPath)[0]!=="."){
 		console.log(`---- [${context.reqId}] blocked: child of "${schema.path}"`)
-		serveError(context,404)
+		await serveError(context,404)
 		return true
 	}
 	return false
 }
 
-const pathRewriteBuilder=(schema)=>(context)=>{
+const pathRewriteBuilder=(schema)=>async(context)=>{
 	if(context.processedPath===schema.from){
 		console.log(`---- [${context.reqId}] rewrited: from "${schema.from}" to "${schema.to}"`)
 		context.processedPath=schema.to
@@ -183,9 +183,39 @@ const pathRewriteBuilder=(schema)=>(context)=>{
 	return false
 }
 
+const rangePathRewriteBuilder=(schema)=>async(context)=>{
+	if(path.relative(schema.from,context.processedPath)[0]!=="."){
+		console.log(`---- [${context.reqId}] rewrited: from child of "${schema.from}" to "${schema.to}"`)
+		context.processedPath=schema.to
+	}
+	return false
+}
+
+const serveFileBuilder=(schema)=>async(context)=>{
+	if(context.processedPath===schema.path){
+		console.log(`---- [${context.reqId}] hit: path "${schema.path}", send file "${schema.file}"`)
+		await serveFile(context,path.resolve(context.basePath,schema.file))
+		return true
+	}
+	return false
+}
+
+const rangeResetBaseBuilder=(schema)=>async(context)=>{
+	let relative=path.relative(schema.path,context.processedPath)
+	if(relative[0]!=="."){
+		console.log(`---- [${context.reqId}] hit: path "${schema.path}", reset base to "${schema.base}"`)
+		context.basePath=path.resolve(context.basePath,schema.base)
+		context.processedPath="/"+relative
+	}
+	return false
+}
+
 const actionBuilders={
 	rangeBlock:rangeBlockBuilder,
-	pathRewrite:pathRewriteBuilder
+	pathRewrite:pathRewriteBuilder,
+	rangePathRewrite:rangePathRewriteBuilder,
+	serveFile:serveFileBuilder,
+	rangeResetBase:rangeResetBaseBuilder
 }
 
 const actionBuilder=(schema)=>{
