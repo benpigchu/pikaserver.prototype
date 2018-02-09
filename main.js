@@ -64,7 +64,7 @@ const serveStream=async(context,stream,code)=>{
 const serveConfirmedFile=async(context,filepath,code,checkTime)=>{
 	if(checkTime&&(context.stat!==undefined)){
 		let stat=context.stat
-		let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stats.mtime
+		let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stat.mtime
 		context.respond.setHeader("Last-Modified",mtime.toUTCString())
 		let ifModifiedAfter=Date.parse(context.request.headers["if-modified-since"])
 		if(!isNaN(ifModifiedAfter)){
