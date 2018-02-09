@@ -13,7 +13,7 @@
 		{"type":"pathRewrite","from":"/here.html","to":"/there.html"},
 		{"type":"rangePathRewrite","from":"/spa","to":"/spa/index.html"},
 		{"type":"serveFile","path":"/path.html","file":"/home/user/path.html"},
-		{"type":"rangeResetBase","path":"/data","base":"/home/user/data"}
+		{"type":"rangeServeFile","path":"/data","base":"/home/user/data"}
 	],
 	"https":{
 		"open":false,

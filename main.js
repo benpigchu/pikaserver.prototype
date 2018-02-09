@@ -200,12 +200,12 @@ const serveFileBuilder=(schema)=>async(context)=>{
 	return false
 }
 
-const rangeResetBaseBuilder=(schema)=>async(context)=>{
+const rangeServeFileBuilder=(schema)=>async(context)=>{
 	let relative=path.relative(schema.path,context.processedPath)
 	if(relative[0]!=="."){
 		console.log(`---- [${context.reqId}] hit: path "${schema.path}", reset base to "${schema.base}"`)
-		context.basePath=path.resolve(context.basePath,schema.base)
-		context.processedPath="/"+relative
+		await serveFile(context,path.resolve(context.basePath,schema.base,relative))
+		return true
 	}
 	return false
 }
@@ -215,7 +215,7 @@ const actionBuilders={
 	pathRewrite:pathRewriteBuilder,
 	rangePathRewrite:rangePathRewriteBuilder,
 	serveFile:serveFileBuilder,
-	rangeResetBase:rangeResetBaseBuilder
+	rangeServeFile:rangeServeFileBuilder
 }
 
 const actionBuilder=(schema)=>{
