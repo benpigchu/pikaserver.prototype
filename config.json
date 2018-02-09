@@ -26,7 +26,7 @@
 		"renew":{
 			"open":false,
 			"period":1728000000,
-			"command":"/home/letsencrypt/letsencrypt-auto renew"
+			"command":"certbot renew"
 		}
 	}
 }

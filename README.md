@@ -1,8 +1,8 @@
 # pikaserver.prototype
 
-The rewrote prototype of the pikaserver. It will run on the benpigchu.com in future.
+The rewrote prototype of the pikaserver. It runs on the benpigchu.com at present.
 
-For current using version, see `legacy-master` branch.
+For previously used version, see `legacy-master` branch.
 
 The project is designed as a single-file single-domain site server with advanced configable static file serving feature, js extension and some util. But also it's possible to add multi-domain support and more complex feature without modify the script itself.
 
