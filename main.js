@@ -31,6 +31,7 @@ const serverStartTime=new Date()
 const getConfig=()=>{
 	let config={}
 	try{
+		let configPath=process.argv[2]?path.resolve(process.cwd(),process.argv[2]):"./config.json"
 		config=require(process.argv[2]||"./config.json")
 	}catch(err){
 		console.log(`Warning: ${err.message}`)
@@ -39,7 +40,7 @@ const getConfig=()=>{
 	return config
 }
 const config=getConfig()
-const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[],errorMessage,errorPage}=config
+const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[],plugins=[],errorMessage,errorPage}=config
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
 const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
 
@@ -210,7 +211,7 @@ const rangeServeFileBuilder=(schema)=>async(context)=>{
 	return false
 }
 
-const actionBuilders={
+let actionBuilders={
 	rangeBlock:rangeBlockBuilder,
 	pathRewrite:pathRewriteBuilder,
 	rangePathRewrite:rangePathRewriteBuilder,
@@ -222,8 +223,29 @@ const actionBuilder=(schema)=>{
 	if(schema.type in actionBuilders){
 		return actionBuilders[schema.type](schema)
 	}
-	return(context)=>false
+	console.log(`Warning: schema "${schema}" is not recognized`)
+	return async(context)=>false
 }
+
+const builderUtil={
+	actionBuilder:actionBuilder,
+	serveError:serveError,
+	serveFile:serveFile,
+	serveConfirmedFile:serveConfirmedFile,
+	serveStream:serveStream
+}
+
+const registerPlugin=(identifier)=>{
+	try{
+		const{builder,type}=require(identifier)(config,util)
+		actionBuilders[type]=builder
+	}catch(err){
+		console.log(`Warning: ${err.message}`)
+		console.log(`Warning: plugin "${identifier}" is not registered`)
+	}
+}
+
+plugins.forEach(registerPlugin)
 
 const actions=actionsSchema.map(actionBuilder)
 
@@ -242,7 +264,6 @@ const handler=async(req,res)=>{
 		return
 	}
 	try{
-
 		for(const action of actions){
 			if(await action(context)){
 				return

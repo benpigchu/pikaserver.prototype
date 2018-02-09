@@ -8,12 +8,14 @@
 	"errorPage":{
 		"404":"404.html"
 	},
+	"plugins":["./examplePlugin.js"],
 	"actions":[
 		{"type":"rangeBlock","path":"/nothing"},
 		{"type":"pathRewrite","from":"/here.html","to":"/there.html"},
 		{"type":"rangePathRewrite","from":"/spa","to":"/spa/index.html"},
 		{"type":"serveFile","path":"/path.html","file":"/home/user/path.html"},
-		{"type":"rangeServeFile","path":"/data","base":"/home/user/data"}
+		{"type":"rangeServeFile","path":"/data","base":"/home/user/data"},
+		{"type":"query","path":"/example"}
 	],
 	"https":{
 		"open":false,
