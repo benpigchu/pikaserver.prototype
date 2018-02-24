@@ -76,7 +76,10 @@ const serveConfirmedFile=async(context,filepath,code,checkTime)=>{
 				return
 			}
 		}
-		context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
+		let mime=mimetype[path.extname(filepath)]
+		if(mime){
+			context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
+		}
 	}
 	await serveStream(context,fs.createReadStream(filepath),code)
 }
@@ -276,17 +279,17 @@ const handler=async(req,res)=>{
 		if(!(Number.isInteger(code)&&code<600&&code>=100)){
 			code=500
 		}
-		console.log(`---- [${reqId}] error when handling request, code=${code}, err:${err}`)
+		console.log(`---- [${reqId}] error when handling request, code=${code}, err:${err}：\n${err.stack}`)
 		await serveError(context,code)
 	}
 }
 
-let httpServer
-let httpsServer
+let httpServer=null
+let httpsServer=null
 
 const setupHttpServer=()=>new Promise((res,rej)=>{
 	httpServer=http.createServer((req,res)=>{
-		if(httpsOpen&&hsts){
+		if(httpsOpen&&hsts&&httpsServer){
 			res.setHeader("Strict-Transport-Security","max-age=7776000")
 			res.writeHead(302,{Location:`https://${req.headers.host}${req.url}`})
 			res.end()
@@ -328,11 +331,15 @@ const updateHttps=()=>new Promise((res,rej)=>{
 		if(err){
 			rej(err)
 		}else{
-			httpsServer.close(()=>{
-				console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
-				httpsServer=null
-				setupHttpsServer().then(res)
-			})
+			if(httpsServer===null){
+				res()
+			}else{
+				httpsServer.close(()=>{
+					console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
+					httpsServer=null
+					setupHttpsServer().then(res)
+				})
+			}
 		}
 	})
 })
@@ -351,8 +358,5 @@ process.on("unhandledRejection",(err,promise)=>{
 
 setupHttpServer()
 if(httpsOpen){
-	setupHttpsServer()
-	if(renewOpen){
-		scheduleRenewJob()
-	}
+	(renewOpen?updateHttps().then(scheduleRenewJob):Promise.resolve()).then(setupHttpsServer)
 }
