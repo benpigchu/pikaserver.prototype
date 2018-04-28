@@ -322,17 +322,18 @@ const setupHttpsServer=()=>new Promise((res,rej)=>{
 			rej(err)
 		}
 		console.log(`-- pikaService(http/1.1&http/2 over TLS) running at http://[${host}]:${httpsPort}/`)
+		res()
 	})
 })
 
-const updateHttps=()=>new Promise((res,rej)=>{
+const updateHttpsServer=()=>new Promise((res,rej)=>{
 	console.log(`-- trying to update the cert`)
 	child.exec(renewCommand,(err)=>{
 		if(err){
 			rej(err)
 		}else{
 			if(httpsServer===null){
-				res()
+				setupHttpsServer().then(res)
 			}else{
 				httpsServer.close(()=>{
 					console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
@@ -345,9 +346,9 @@ const updateHttps=()=>new Promise((res,rej)=>{
 })
 
 const scheduleRenewJob=()=>{
+	console.log(`-- next cert update scheduled`)
 	setTimeout(()=>{
-		updateHttps()
-		scheduleRenewJob()
+		updateHttpsServer().then(scheduleRenewJob)
 	},renewPeriod)
 }
 
@@ -358,5 +359,9 @@ process.on("unhandledRejection",(err,promise)=>{
 
 setupHttpServer()
 if(httpsOpen){
-	(renewOpen?updateHttps().then(scheduleRenewJob):Promise.resolve()).then(setupHttpsServer)
+	if(renewOpen){
+		updateHttpsServer().then(scheduleRenewJob)
+	}else{
+		setupHttpsServer()
+	}
 }
