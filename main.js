@@ -63,22 +63,24 @@ const serveStream=async(context,stream,code)=>{
 
 const serveConfirmedFile=async(context,filepath,code,checkTime)=>{
 	if(checkTime&&(context.stat!==undefined)){
+		let mime=mimetype[path.extname(filepath)]
+		if(mime){
+			context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
+		}
 		let stat=context.stat
 		let mtime=stat.mtime.getTime()<serverStartTime.getTime()?serverStartTime:stat.mtime
 		context.respond.setHeader("Last-Modified",mtime.toUTCString())
 		let ifModifiedAfter=Date.parse(context.request.headers["if-modified-since"])
 		if(!isNaN(ifModifiedAfter)){
-			console.log(`---- [${context.reqId}] detected header if-modified-since: ${new Date(ifModifiedAfter).toUTCString()}(${ifModifiedAfter})`)
-			if(mtime.getTime()-ifModifiedAfter<=999){
-				console.log(`---- [${context.reqId}] file is not modified, send 304`)
-				context.respond.writeHead(304)
-				context.respond.end()
-				return
+			if(path.extname(filepath)!==".html"){
+				console.log(`---- [${context.reqId}] detected header if-modified-since: ${new Date(ifModifiedAfter).toUTCString()}(${ifModifiedAfter})`)
+				if(mtime.getTime()-ifModifiedAfter<=999){
+					console.log(`---- [${context.reqId}] file is not modified, send 304`)
+					context.respond.writeHead(304)
+					context.respond.end()
+					return
+				}
 			}
-		}
-		let mime=mimetype[path.extname(filepath)]
-		if(mime){
-			context.respond.setHeader("Content-Type",mimetype[path.extname(filepath)])
 		}
 	}
 	await serveStream(context,fs.createReadStream(filepath),code)
