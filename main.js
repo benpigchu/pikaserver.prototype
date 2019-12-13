@@ -242,7 +242,7 @@ const builderUtil={
 
 const registerPlugin=(identifier)=>{
 	try{
-		const{builder,type}=require(identifier)(config,util)
+		const{builder,type}=require(identifier)(config,builderUtil)
 		actionBuilders[type]=builder
 	}catch(err){
 		console.log(`Warning: ${err.message}`)
@@ -265,7 +265,7 @@ const handler=async(req,res)=>{
 	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:decodeURIComponent(reqUrl.pathname),reqId:reqId,basePath:basePath,baseErrorPath:basePath}
 	if(context.processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
 		console.log(`---- [${reqId}] bad request: include ".."`)
-		serveError(context,400)
+		await serveError(context,400)
 		return
 	}
 	try{
