@@ -210,7 +210,7 @@ const rangeServeFileBuilder=(schema)=>async(context)=>{
 	let relative=path.relative(schema.path,context.processedPath)
 	if(relative[0]!=="."){
 		console.log(`---- [${context.reqId}] hit: path "${schema.path}", reset base to "${schema.base}"`)
-		await serveFile(context,path.resolve(context.basePath,schema.base,relative))
+		await serveFile(context,path.join(path.resolve(context.basePath,schema.base),relative))
 		return true
 	}
 	return false
