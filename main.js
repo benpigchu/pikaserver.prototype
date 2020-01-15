@@ -1,5 +1,4 @@
 const fs=require("fs")
-const url=require("url")
 const path=require("path")
 const util=require("util")
 const zlib=require("zlib")
@@ -260,20 +259,32 @@ const handler=async(req,res)=>{
 	reqNum++
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
 	const domain=req.headers.host
-	const reqUrl=url.parse(req.url,true)
+	const reqUrl=new URL(req.url,`http://${domain}`)
+	console.log(req.url)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
-	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:decodeURIComponent(reqUrl.pathname),reqId:reqId,basePath:basePath,baseErrorPath:basePath}
-	if(context.processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
+	const processedPath=(()=>{
+		try{
+			return decodeURIComponent(reqUrl.pathname)
+		}catch{
+			return null
+		}
+	})()
+	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:processedPath,reqId:reqId,basePath:basePath,baseErrorPath:basePath}
+	if(processedPath===null){
+		console.log(`---- [${reqId}] bad request: URI malformed`)
+		await serveError(context,400)
+		return
+	}else if(processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
 		console.log(`---- [${reqId}] bad request: include ".."`)
 		await serveError(context,400)
 		return
 	}
-	try{
-		for(const action of actions){
-			if(await action(context)){
-				return
-			}
+	for(const action of actions){
+		if(await action(context)){
+			return
 		}
+	}
+	try{
 		console.log(`---- [${reqId}] fallback to default action, try serve static file`)
 		await defaultAction(context)
 	}catch(err){
