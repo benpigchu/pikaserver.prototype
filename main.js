@@ -1,4 +1,5 @@
 const fs=require("fs")
+const url = require('url');
 const path=require("path")
 const util=require("util")
 const zlib=require("zlib")
@@ -39,7 +40,7 @@ const getConfig=()=>{
 	return config
 }
 const config=getConfig()
-const{host="::",port:httpPort="80",basePath="/home/user/static/",https={},actions:actionsSchema=[],plugins=[],errorMessage,errorPage}=config
+const{host="::",port:httpPort="80",defaultDomain="domain.example",basePath="/home/user/static/",https={},actions:actionsSchema=[],plugins=[],errorMessage,errorPage}=config
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
 const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
 
@@ -258,7 +259,8 @@ const handler=async(req,res)=>{
 	const reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
-	const domain=req.headers.host
+	const rawDomain=("host" in req.headers)?url.domainToUnicode(req.headers.host):defaultDomain
+	const domain=rawDomain===""?defaultDomain:rawDomain
 	const reqUrl=new URL(req.url,`http://${domain}`)
 	console.log(req.url)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
