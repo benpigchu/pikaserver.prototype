@@ -42,7 +42,7 @@ const getConfig=()=>{
 const config=getConfig()
 const{host="::",port:httpPort="80",defaultDomain="domain.example",basePath="/home/user/static/",https={},actions:actionsSchema=[],plugins=[],errorMessage,errorPage}=config
 const{open:httpsOpen=false,hsts=true,port:httpsPort="443",key="",cert="",renew={}}=https
-const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand=""}=renew
+const{open:renewOpen=false,period:renewPeriod=1728000000,command:renewCommand="",commandArgs:renewArgs=[]}=renew
 
 const encoders=[{name:"gzip",builder:()=>zlib.createGzip()},{name:"deflate",builder:()=>zlib.createDeflate()}]
 
@@ -343,7 +343,7 @@ const setupHttpsServer=()=>new Promise((res,rej)=>{
 
 const updateHttpsServer=()=>new Promise((res,rej)=>{
 	console.log(`-- trying to update the cert`)
-	child.exec(renewCommand,(err)=>{
+	child.spawn(renewCommand,renewArgs,{stdio:["ignore","inherit","inherit"]}).on("close",(err)=>{
 		if(err){
 			rej(err)
 		}else{
