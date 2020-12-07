@@ -259,10 +259,14 @@ const handler=async(req,res)=>{
 	const reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
+	if(req.url.match(/(^|\/)\.\.($|\/)/)!==null){
+		console.log(`---- [${reqId}] bad request: include ".."`)
+		await serveError(context,400)
+		return
+	}
 	const rawDomain=("host" in req.headers)?url.domainToUnicode(req.headers.host):defaultDomain
 	const domain=rawDomain===""?defaultDomain:rawDomain
-	const reqUrl=new URL(req.url,`http://${domain}`)
-	console.log(req.url)
+	const reqUrl=new URL(path.normalize(req.url),`http://${domain}`)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
 	const processedPath=(()=>{
 		try{
@@ -274,10 +278,6 @@ const handler=async(req,res)=>{
 	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:processedPath,reqId:reqId,basePath:basePath,baseErrorPath:basePath}
 	if(processedPath===null){
 		console.log(`---- [${reqId}] bad request: URI malformed`)
-		await serveError(context,400)
-		return
-	}else if(processedPath.match(/(^|\/)\.\.($|\/)/)!==null){
-		console.log(`---- [${reqId}] bad request: include ".."`)
 		await serveError(context,400)
 		return
 	}
