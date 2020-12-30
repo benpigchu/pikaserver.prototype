@@ -259,14 +259,9 @@ const handler=async(req,res)=>{
 	const reqId=Date.now()+reqNum
 	reqNum++
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
-	if(req.url.match(/(^|\/)\.\.($|\/)/)!==null){
-		console.log(`---- [${reqId}] bad request: include ".."`)
-		await serveError(context,400)
-		return
-	}
 	const rawDomain=("host" in req.headers)?url.domainToUnicode(req.headers.host):defaultDomain
 	const domain=rawDomain===""?defaultDomain:rawDomain
-	const reqUrl=new URL(path.normalize(req.url),`http://${domain}`)
+	const reqUrl=new URL(path.posix.normalize(path.posix.join(path.posix.sep,req.url)),`http://${domain}`)
 	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
 	const processedPath=(()=>{
 		try{
