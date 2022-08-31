@@ -343,13 +343,10 @@ const updateHttpsServer=()=>new Promise((res,rej)=>{
 			rej(err)
 		}else{
 			if(httpsServer===null){
-				setupHttpsServer().then(res)
+				res()
 			}else{
-				httpsServer.close(()=>{
-					console.log(`-- restart pikaService(http/1.1&http/2 over TLS)`)
-					httpsServer=null
-					setupHttpsServer().then(res)
-				})
+				console.log(`-- update cert pikaService(http/1.1&http/2 over TLS)`)
+				httpsServer.setSecureContext({key:fs.readFileSync(key),cert:fs.readFileSync(cert)})
 			}
 		}
 	})
@@ -358,7 +355,8 @@ const updateHttpsServer=()=>new Promise((res,rej)=>{
 const scheduleRenewJob=()=>{
 	console.log(`-- next cert update scheduled`)
 	setTimeout(()=>{
-		updateHttpsServer().then(scheduleRenewJob)
+		updateHttpsServer()
+		scheduleRenewJob();
 	},renewPeriod)
 }
 
