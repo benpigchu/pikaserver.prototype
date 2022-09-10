@@ -343,7 +343,7 @@ const updateHttpsServer=()=>new Promise((res,rej)=>{
 			rej(err)
 		}else{
 			if(httpsServer===null){
-				res()
+				setupHttpsServer().then(res)
 			}else{
 				console.log(`-- update cert pikaService(http/1.1&http/2 over TLS)`)
 				httpsServer.setSecureContext({key:fs.readFileSync(key),cert:fs.readFileSync(cert)})
