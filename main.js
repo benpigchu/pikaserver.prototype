@@ -261,8 +261,7 @@ const handler=async(req,res)=>{
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
 	const rawDomain=("host" in req.headers)?url.domainToUnicode(req.headers.host):defaultDomain
 	const domain=rawDomain===""?defaultDomain:rawDomain
-	const reqUrl=new URL(path.posix.normalize(path.posix.join(path.posix.sep,req.url)),`http://${domain}`)
-	console.log(`---- [${reqId}] ask for "${reqUrl.pathname}" under "${domain}" with search "<${reqUrl.search}>"`)
+	const reqUrl=new URL(path.posix.normalize(path.posix.join(path.posix.sep,decodeURIComponent(req.url))),`http://${domain}`)
 	const processedPath=(()=>{
 		try{
 			return decodeURIComponent(reqUrl.pathname)
@@ -270,6 +269,7 @@ const handler=async(req,res)=>{
 			return null
 		}
 	})()
+	console.log(`---- [${reqId}] ask for "${processedPath}" under "${domain}" with search "<${reqUrl.search}>"`)
 	const context={request:req,respond:res,domain:domain,url:reqUrl,processedPath:processedPath,reqId:reqId,basePath:basePath,baseErrorPath:basePath}
 	if(processedPath===null){
 		console.log(`---- [${reqId}] bad request: URI malformed`)
