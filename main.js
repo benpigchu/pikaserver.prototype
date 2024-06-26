@@ -261,10 +261,10 @@ const handler=async(req,res)=>{
 	console.log(`-- [${reqId}] request heared at ${new Date()}`)
 	const rawDomain=("host" in req.headers)?url.domainToUnicode(req.headers.host):defaultDomain
 	const domain=rawDomain===""?defaultDomain:rawDomain
-	const reqUrl=new URL(path.posix.normalize(path.posix.join(path.posix.sep,decodeURIComponent(req.url))),`http://${domain}`)
+	const reqUrl=new URL(req.url,`http://${domain}`)
 	const processedPath=(()=>{
 		try{
-			return decodeURIComponent(reqUrl.pathname)
+			return path.posix.normalize(path.posix.join(path.posix.sep,decodeURIComponent(reqUrl.pathname)))
 		}catch{
 			return null
 		}
